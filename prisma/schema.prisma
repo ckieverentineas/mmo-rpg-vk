@@ -1,0 +1,194 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgres"
+  url      = env("DATABASE_URL")
+}
+
+//user
+
+model User {
+  id           Int      @id @default(autoincrement())
+  idvk         Int      
+  user_type    UserType @relation(fields: [id_user_type], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_user_type Int
+  gold         Int
+  hp           Int
+  crdate       DateTime @default(now())
+  Weapon       Weapon[]
+  Armor        Armor[]
+  Battle       Battle[]
+  Skill        Skill[]
+}
+
+model UserType {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String
+  label       String
+  crdate      DateTime @default(now())
+  User        User[]
+}
+
+model UserConfig {
+  id       Int      @id @default(autoincrement())
+  hp_min   Int
+  hp_max   Int
+  gold_min Int
+  gold_max Int
+  crdate   DateTime @default(now())
+}
+
+//Skill
+
+model Skill {
+  id              Int         @id @default(autoincrement())
+  user            User        @relation(fields: [id_user], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_user         Int
+  skill_config    SkillConfig @relation(fields: [id_skill_config], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_skill_config Int
+  lvl             Int
+  xp              Int
+  crdate          DateTime    @default(now())
+}
+
+model SkillCategory {
+  id          Int           @id @default(autoincrement())
+  name        String        @unique
+  description String
+  label       String
+  crdate      DateTime      @default(now())
+  SkillConfig SkillConfig[]
+}
+
+model SkillConfig {
+  id                Int            @id @default(autoincrement())
+  name              String
+  description       String
+  label             String
+  skill_category    SkillCategory  @relation(fields: [id_skill_category], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_skill_category Int
+  crdate            DateTime       @default(now())
+  Skill             Skill[]
+  WeaponConfig      WeaponConfig[]
+  ArmorConfig       ArmorConfig[]
+  Weapon            Weapon[]
+  Armor             Armor[]
+}
+
+//Weapon
+
+model Weapon {
+  id              Int         @id @default(autoincrement())
+  user            User        @relation(fields: [id_user], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_user         Int
+  skill_config    SkillConfig @relation(fields: [id_skill_config], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_skill_config Int
+  type_damage     DamageType  @relation(fields: [id_damage_type], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_damage_type  Int
+  lvl             Int
+  atk_min         Int
+  atk_max         Int
+  hp              Int
+  name            String
+  crdate          DateTime    @default(now())
+}
+
+model DamageType {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String
+  label       String
+  crdate      DateTime @default(now())
+  Weapon      Weapon[]
+  Armor       Armor[]
+}
+
+model WeaponConfig {
+  id              Int         @id @default(autoincrement())
+  atk_min         Int
+  atk_max         Int
+  lvl_req_min     Int
+  lvl_req_max     Int
+  hp_min          Int
+  hp_max          Int
+  skill_config    SkillConfig @relation(fields: [id_skill_config], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_skill_config Int
+  crdate          DateTime    @default(now())
+}
+
+//Armor
+
+model Armor {
+  id              Int         @id @default(autoincrement())
+  user            User        @relation(fields: [id_user], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_user         Int
+  skill_config    SkillConfig @relation(fields: [id_skill_config], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_skill_config Int
+  type_damage     DamageType  @relation(fields: [id_damage_type], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_damage_type  Int
+  armor_type      ArmorType   @relation(fields: [id_armor_type], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_armor_type   Int
+  lvl             Int
+  def_min         Int
+  def_max         Int
+  hp              Int
+  name            String
+  crdate          DateTime    @default(now())
+}
+
+model ArmorType {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String
+  label       String
+  crdate      DateTime @default(now())
+  Armor       Armor[]
+}
+
+model ArmorConfig {
+  id              Int         @id @default(autoincrement())
+  skill_config    SkillConfig @relation(fields: [id_skill_config], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_skill_config Int
+  def_min         Int
+  def_max         Int
+  lvl_req_min     Int
+  lvl_req_max     Int
+  hp_min          Int
+  hp_max          Int
+  crdate          DateTime    @default(now())
+}
+
+//battle
+
+model Battle {
+  id                    Int               @id @default(autoincrement())
+  user                  User              @relation(fields: [id_user], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_user               Int
+  battle_registrator    BattleRegistrator @relation(fields: [id_battle_registrator], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_battle_registrator Int
+  hp_temp               Int
+  crdate                DateTime          @default(now())
+}
+
+model BattleType {
+  id                Int                 @id @default(autoincrement())
+  name              String              @unique
+  description       String
+  label             String
+  crdate            DateTime            @default(now())
+  BattleRegistrator BattleRegistrator[]
+}
+
+model BattleRegistrator {
+  id             Int        @id @default(autoincrement())
+  battle_type    BattleType @relation(fields: [id_battle_type], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_battle_type Int
+  crdate         DateTime   @default(now())
+  Battle         Battle[]
+}
