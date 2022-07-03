@@ -185,9 +185,6 @@ CREATE TABLE "BattleRegistrator" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "User_idvk_key" ON "User"("idvk");
-
--- CreateIndex
 CREATE UNIQUE INDEX "UserType_name_key" ON "UserType"("name");
 
 -- CreateIndex
