@@ -126,31 +126,82 @@ vk.updates.on('message_new', async (context, next) => {
 				id_skill_category: 1
 			}
 		})
-		const keyboard = Keyboard.builder()
-		await weapon_type.forEach(element => {
-			keyboard.textButton({
-					label: element.label,
+		let checker = false
+		let counter = 0
+		let current = 0
+		let modif = 0
+		let skill:any = {}
+		while (checker == false) {
+			let keyboard = Keyboard.builder()
+			counter = 0
+			current = modif
+			while (current < weapon_type.length && counter < 5 ) {
+				keyboard.textButton({
+					label: weapon_type[current].label,
 					payload: {
-						command: element.id
+						command: weapon_type[current].id
 					},
 					color: 'primary'
+				})
+				counter++
+				current++
+			}
+			keyboard.row()
+			.textButton({
+				label: '<',
+				payload: {
+					command: "left"
+				},
+				color: 'primary'
 			})
-		});
-
-		let weapon_list = ''
-		await weapon_type.forEach(element => {
-			weapon_list += `- ${element.description} \n`
-		});
-		console.log(keyboard)
-		const skill = await context.question(`О себе ничего не расскажу, и о тебе тоже но позже может быть еще увидимся,
-											приснилось мне во снах сегодня, что все это произойдет, нет времени обьяснять!
-											Позже все узнаешь у прохожих, а сейчас давайка выбирай себе оружие, что даст те скилл:
-											${weapon_list}
-											Держи дистанцию с врагом, или наоборот не отдаляйся.`,
-											{
-												keyboard: keyboard.inline()
-											}
-		)
+			.textButton({
+				label: 'назад',
+				payload: {
+					command: 'back'
+				},
+				color: 'primary'
+			})
+			.textButton({
+				label: '>',
+				payload: {
+					command: 'right'
+				},
+				color: 'primary'
+			})
+			let weapon_list = ''
+			await weapon_type.forEach(element => {
+				weapon_list += `- ${element.description} \n`
+			});
+			skill = await context.question(`О себе ничего не расскажу, и о тебе тоже но позже может быть еще увидимся,
+												приснилось мне во снах сегодня, что все это произойдет, нет времени обьяснять!
+												Позже все узнаешь у прохожих, а сейчас давайка выбирай себе оружие, что даст те скилл:
+												${weapon_list}
+												Держи дистанцию с врагом, или наоборот не отдаляйся.`,
+												{
+													keyboard: keyboard.inline()
+												}
+			)
+			if (!skill.payload) {
+				context.send('Жмите по inline кнопкам!')
+			} else {
+				if (skill.payload.command == 'back') {
+					context.send('Вы нажали назад')
+					modif = 0
+					continue
+				}
+				if (skill.payload.command == 'left') {
+					modif-5 >= 0 && modif < weapon_type.length ? modif-=5 : context.send('Позади ничего нет!')
+					continue
+				}
+				if (skill.payload.command == 'right') {
+					console.log('test ' + modif + ' total:' + weapon_type.length)
+					modif+5 < weapon_type.length ? modif+=5: context.send('Впереди ничего нет')
+					continue
+				}
+				checker = true
+			}
+		}
+		
 
 		await Weapon_Create(context, skill)
 		await Skill_Create(context, skill)
