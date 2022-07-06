@@ -134,21 +134,21 @@ vk.updates.on('message_new', async (context, next) => {
 						command: element.id
 					},
 					color: 'primary'
-			}).row()
+			})
 		});
 
 		let weapon_list = ''
 		await weapon_type.forEach(element => {
 			weapon_list += `- ${element.description} \n`
 		});
-
+		console.log(keyboard)
 		const skill = await context.question(`О себе ничего не расскажу, и о тебе тоже но позже может быть еще увидимся,
 											приснилось мне во снах сегодня, что все это произойдет, нет времени обьяснять!
 											Позже все узнаешь у прохожих, а сейчас давайка выбирай себе оружие, что даст те скилл:
 											${weapon_list}
 											Держи дистанцию с врагом, или наоборот не отдаляйся.`,
 											{
-												keyboard: keyboard
+												keyboard: keyboard.inline()
 											}
 		)
 
