@@ -10,6 +10,8 @@ import { timeStamp } from 'console';
 import { registerUserRoutes } from './engine/player'
 import { InitGameRoutes } from './engine/init';
 import { send } from 'process';
+import { Weapon_Create } from './engine/core/weapon';
+import { Skill_Create } from './engine/core/skill';
 
 //авторизация
 const vk = new VK({
@@ -150,41 +152,12 @@ vk.updates.on('message_new', async (context, next) => {
 											}
 		)
 
-		console.log(skill)
-		const weapon_config_get = await prisma.weaponConfig.findFirst({
-			where: {
-				id_skill_config: skill.payload.command
-			}
-		})
-		const user_get = await prisma.user.findFirst({
-			where: {
-				idvk: context.senderId
-			}
-		})
+		await Weapon_Create(context, skill)
+		await Skill_Create(context, skill)
+		
 
-		const skill_create = await prisma.skill.create({
-			data: {
-				id_user: user_get?.id,
-				id_skill_config: skill.payload.command,
-				lvl: 0,
-				xp: 0
-			}
-		})
-		context.send(`🏴‍☠Получен новый скилл: ${skill.text}`)
-		const weapon_create = await prisma.weapon.create({
-			data:{
-				id_user: user_get?.id,
-				id_skill_config: skill.payload.command,
-				id_damage_type: 1,
-				lvl: randomInt(weapon_config_get?.lvl_req_min || 0, weapon_config_get?.lvl_req_max || 5),
-				atk_min: randomInt(weapon_config_get?.atk_min || 0, weapon_config_get?.lvl_req_max || 5),
-				atk_max: randomInt(weapon_config_get?.atk_min || 0, weapon_config_get?.atk_max || 5),
-				hp: randomInt(weapon_config_get?.hp_min || 0, weapon_config_get?.hp_max || 5),
-				name: skill.text
-			}
-		})
-		await context.send(`Получено оружие: ${weapon_create.name}
-					⚔${weapon_create.atk_min}-${weapon_create.atk_max} 🔧${weapon_create.hp}`)
+		
+		
 		await context.send(`Запомни на последок:
 					⚔ - минимальный и максимальный урон, наносящийся по цели;
 					🔧 - прочность оружия, количество ударов, что выдержит оружие, прежде чем треснет.`,
