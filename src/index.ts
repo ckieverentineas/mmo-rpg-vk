@@ -126,6 +126,9 @@ vk.updates.on('message_new', async (context, next) => {
 				id_skill_category: 1
 			}
 		})
+		context.send(`О себе ничего не расскажу, и о тебе тоже но позже может быть еще увидимся,
+		приснилось мне во снах сегодня, что все это произойдет, нет времени обьяснять!
+		Позже все узнаешь у прохожих, а сейчас давайка выбирай себе оружие, что даст те скилл:`)
 		let checker = false
 		let counter = 0
 		let current = 0
@@ -135,7 +138,9 @@ vk.updates.on('message_new', async (context, next) => {
 			let keyboard = Keyboard.builder()
 			counter = 0
 			current = modif
-			while (current < weapon_type.length && counter < 5 ) {
+			const limit = 6
+			let weapon_list = ''
+			while (current < weapon_type.length && counter < limit ) {
 				keyboard.textButton({
 					label: weapon_type[current].label,
 					payload: {
@@ -143,8 +148,12 @@ vk.updates.on('message_new', async (context, next) => {
 					},
 					color: 'primary'
 				})
+				weapon_list += `- ${weapon_type[current].description} \n`
 				counter++
 				current++
+				if (counter%2 == 0) {
+					keyboard.row()
+				}
 			}
 			keyboard.row()
 			.textButton({
@@ -168,15 +177,8 @@ vk.updates.on('message_new', async (context, next) => {
 				},
 				color: 'primary'
 			})
-			let weapon_list = ''
-			await weapon_type.forEach(element => {
-				weapon_list += `- ${element.description} \n`
-			});
-			skill = await context.question(`О себе ничего не расскажу, и о тебе тоже но позже может быть еще увидимся,
-												приснилось мне во снах сегодня, что все это произойдет, нет времени обьяснять!
-												Позже все узнаешь у прохожих, а сейчас давайка выбирай себе оружие, что даст те скилл:
-												${weapon_list}
-												Держи дистанцию с врагом, или наоборот не отдаляйся.`,
+			
+			skill = await context.question(`${weapon_list}`,
 												{
 													keyboard: keyboard.inline()
 												}
@@ -190,12 +192,12 @@ vk.updates.on('message_new', async (context, next) => {
 					continue
 				}
 				if (skill.payload.command == 'left') {
-					modif-5 >= 0 && modif < weapon_type.length ? modif-=5 : context.send('Позади ничего нет!')
+					modif-limit >= 0 && modif < weapon_type.length ? modif-=limit : context.send('Позади ничего нет!')
 					continue
 				}
 				if (skill.payload.command == 'right') {
 					console.log('test ' + modif + ' total:' + weapon_type.length)
-					modif+5 < weapon_type.length ? modif+=5: context.send('Впереди ничего нет')
+					modif+limit < weapon_type.length ? modif+=limit: context.send('Впереди ничего нет')
 					continue
 				}
 				checker = true
