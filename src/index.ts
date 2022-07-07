@@ -12,6 +12,9 @@ import { InitGameRoutes } from './engine/init';
 import { send } from 'process';
 import { Weapon_Create } from './engine/core/weapon';
 import { Skill_Create } from './engine/core/skill';
+import { Gen_Inline_Button } from './engine/core/button';
+import { Player_register } from './engine/core/user';
+import { Tutorial_License, Tutorial_Weapon, Tutorial_Welcome } from './engine/core/tutorial';
 
 //авторизация
 const vk = new VK({
@@ -51,188 +54,29 @@ vk.updates.on('message_new', async (context, next) => {
 	})
 	//если пользователя нет, то начинаем регистрацию
 	if (!user_check) {
-		//согласие на обработку
-		const answer = await context.question(
-			'Согласны-ли Вы на обработку персональных данных?',
-			{
-				keyboard: Keyboard.builder()
-				.textButton({
-					label: 'да',
-					payload: {
-						command: 'Согласиться'
-					},
-					color: 'positive'
-				})
-				.row()
-				.textButton({
-					label: 'Отказаться',
-					payload: {
-						command: 'Отказаться'
-					},
-					color: 'negative'
-				}).oneTime()
-			}
-		);
-		
-		if (!/да|yes|Согласиться|конечно/i.test(answer.text|| '{}')) {
-			await context.send('Тогда, мы не можем совершить регистрацию');
-			return;
+		//согласие на обработку данных
+		const offer = await Tutorial_License(context)
+		if (offer == false) {
+			return
 		}
-		//регистрация пользователя
-		const user_config_get = await prisma.userConfig.findFirst({})
-		const user_create = await prisma.user.create({
-			data: {
-				idvk: context.senderId,
-				gold: randomInt(user_config_get?.gold_min||5, user_config_get?.gold_max||10),
-				hp: randomInt(user_config_get?.hp_min||5, user_config_get?.hp_max||10),
-				id_user_type: 1
-			}
-		})
-		console.log(`Created account for user ${user_create.idvk}`)
-		//приветствие игрока
-		const counter_players = await prisma.user.count()
-		await context.send(`Добро пожаловать в вселенную Мастеров Рун.
-							Сейчас ее населяет: ${counter_players} игроков.
-							Существует в ней и сопровождает мир: 0 NPC.
-							В этот солнечный день вы каким-то образом оказались в этой вселенной.`
-		);
-		
-		const begin = await context.question(`Таверна. Пол. Ваша душа смотрит на свое бездыханное тело после смертной схватки с какими-то чудаками.
-											Внезапно в помещение входит таинственный некромант кастует высокоуровневое заклинание.
-											Вас притягивает обратно в тело и загадочный человек в плаще спрашивает,
-											- Ты помнишь, что произошло?`,
-											{
-												keyboard: Keyboard.builder()
-												.textButton({
-													label: 'Я ничего не помню.',
-													payload: {
-														command: 'Согласиться'
-													},
-													color: 'secondary'
-												})
-												.row()
-												.textButton({
-													label: 'А ты кто?',
-													payload: {
-														command: 'Отказаться'
-													},
-													color: 'secondary'
-												}).oneTime()
-											}
-		)
-
+		//регистрация игрока
+		await Player_register(context)
+		//предыстория
+		await Tutorial_Welcome(context)
+		//получаем список способностей
 		const weapon_type = await prisma.skillConfig.findMany({
 			where: {
 				id_skill_category: 1
 			}
 		})
-		context.send(`О себе ничего не расскажу, и о тебе тоже но позже может быть еще увидимся,
-		приснилось мне во снах сегодня, что все это произойдет, нет времени обьяснять!
-		Позже все узнаешь у прохожих, а сейчас давайка выбирай себе оружие, что даст те скилл:`)
-		let checker = false
-		let counter = 0
-		let current = 0
-		let modif = 0
-		let skill:any = {}
-		while (checker == false) {
-			let keyboard = Keyboard.builder()
-			counter = 0
-			current = modif
-			const limit = 6
-			let weapon_list = ''
-			while (current < weapon_type.length && counter < limit ) {
-				keyboard.textButton({
-					label: weapon_type[current].label,
-					payload: {
-						command: weapon_type[current].id
-					},
-					color: 'primary'
-				})
-				weapon_list += `- ${weapon_type[current].description} \n`
-				counter++
-				current++
-				if (counter%2 == 0) {
-					keyboard.row()
-				}
-			}
-			keyboard.row()
-			.textButton({
-				label: '<',
-				payload: {
-					command: "left"
-				},
-				color: 'primary'
-			})
-			.textButton({
-				label: 'назад',
-				payload: {
-					command: 'back'
-				},
-				color: 'primary'
-			})
-			.textButton({
-				label: '>',
-				payload: {
-					command: 'right'
-				},
-				color: 'primary'
-			})
-			
-			skill = await context.question(`${weapon_list}`,
-												{
-													keyboard: keyboard.inline()
-												}
-			)
-			if (!skill.payload) {
-				context.send('Жмите по inline кнопкам!')
-			} else {
-				if (skill.payload.command == 'back') {
-					context.send('Вы нажали назад')
-					modif = 0
-					continue
-				}
-				if (skill.payload.command == 'left') {
-					modif-limit >= 0 && modif < weapon_type.length ? modif-=limit : context.send('Позади ничего нет!')
-					continue
-				}
-				if (skill.payload.command == 'right') {
-					console.log('test ' + modif + ' total:' + weapon_type.length)
-					modif+limit < weapon_type.length ? modif+=limit: context.send('Впереди ничего нет')
-					continue
-				}
-				checker = true
-			}
-		}
-		
-
+		//генерируем клавиатуру для предоставления способностей игроку
+		const skill = await  Gen_Inline_Button(context, weapon_type)
+		//Генерируем оружие игроку
 		await Weapon_Create(context, skill)
+		//Создаем скилл игрока для использования оружия
 		await Skill_Create(context, skill)
-		
-
-		
-		
-		await context.send(`Запомни на последок:
-					⚔ - минимальный и максимальный урон, наносящийся по цели;
-					🔧 - прочность оружия, количество ударов, что выдержит оружие, прежде чем треснет.`,
-					{
-						keyboard: Keyboard.builder()
-						.textButton({
-							label: 'Войти в стартовый город',
-							payload: {
-								command: 'Согласиться'
-							},
-							color: 'secondary'
-						})
-						.row()
-						.textButton({
-							label: 'Пойти нафиг',
-							payload: {
-								command: 'Отказаться'
-							},
-							color: 'secondary'
-						})
-					}
-		)
+		//Заканчиваем обучение
+		await Tutorial_Weapon(context)
 	}
 	return next();
 })
