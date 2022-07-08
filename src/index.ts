@@ -14,7 +14,7 @@ import { Weapon_Create } from './engine/core/weapon';
 import { Skill_Create } from './engine/core/skill';
 import { Gen_Inline_Button } from './engine/core/button';
 import { Player_register } from './engine/core/user';
-import { Tutorial_License, Tutorial_Weapon, Tutorial_Welcome } from './engine/core/tutorial';
+import { Tutorial_Armor, Tutorial_License, Tutorial_Weapon, Tutorial_Welcome } from './engine/core/tutorial';
 import { Armor_Create } from './engine/core/armor';
 
 //авторизация
@@ -85,9 +85,10 @@ vk.updates.on('message_new', async (context, next) => {
 			}
 		})
 		//генерируем клавиатуру для предоставления способностей игроку
+		context.send(`А теперь перейдем к выбору брони:`)
 		const armor = await  Gen_Inline_Button(context, armor_type)
 		await Armor_Create(context, armor)
-		console.log(armor)
+		Tutorial_Armor(context)
 		
 	}
 	return next();

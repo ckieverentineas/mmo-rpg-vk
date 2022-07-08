@@ -36,7 +36,7 @@ export async function Armor_Create(context:any, skill: any) {
                 name: skill.text
             }
         })
-        await context.send(`Получена броня: ${weapon_create.name} - ${armor_type[i].label}
+        await context.send(`Получена: ${weapon_create.name} - ${armor_type[i].label}
         🛡${weapon_create.def_min}-${weapon_create.def_max} 🔧${weapon_create.hp}`)
     }
 }
