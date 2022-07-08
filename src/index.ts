@@ -15,6 +15,7 @@ import { Skill_Create } from './engine/core/skill';
 import { Gen_Inline_Button } from './engine/core/button';
 import { Player_register } from './engine/core/user';
 import { Tutorial_License, Tutorial_Weapon, Tutorial_Welcome } from './engine/core/tutorial';
+import { Armor_Create } from './engine/core/armor';
 
 //авторизация
 const vk = new VK({
@@ -77,6 +78,17 @@ vk.updates.on('message_new', async (context, next) => {
 		await Skill_Create(context, skill)
 		//Заканчиваем обучение
 		await Tutorial_Weapon(context)
+		//получаем список брони
+		const armor_type = await prisma.skillConfig.findMany({
+			where: {
+				id_skill_category: 2
+			}
+		})
+		//генерируем клавиатуру для предоставления способностей игроку
+		const armor = await  Gen_Inline_Button(context, armor_type)
+		await Armor_Create(context, armor)
+		console.log(armor)
+		
 	}
 	return next();
 })

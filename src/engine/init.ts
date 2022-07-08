@@ -80,11 +80,23 @@ export function InitGameRoutes(hearManager: HearManager<IQuestionMessageContext>
 					id_skill_category: 1,
 				},
 				{
-					name: 'armor',
-					description: 'Броня - комплект брони защищает вас сильнее.',
-					label: 'Броня',
+					name: 'armeasy',
+					description: 'Легкая броня - комплект брони защищает вас от легких царапин.',
+					label: 'Легкая броня',
 					id_skill_category: 2,
 				},
+				{
+					name: 'armmedium',
+					description: 'Средняя броня - комплект брони защищает вас кровоточащих ударов.',
+					label: 'Средняя броня',
+					id_skill_category: 2,
+				},
+				{
+					name: 'armhard',
+					description: 'Тяжелая броня - комплект брони защищает от стрел и пробивающего оружия.',
+					label: 'Тяжелая броня',
+					id_skill_category: 2,
+				}
 			],
 			skipDuplicates: true
 		})
@@ -175,16 +187,36 @@ export function InitGameRoutes(hearManager: HearManager<IQuestionMessageContext>
 		})
 		console.log((armor_type ? "Success" : "Fail") + " init ArmorType")
 
-		const armor_config = await prisma.armorConfig.create({
-			data: {
-				id_skill_config: 5,
-				def_min: 1,
-				def_max: 10,
-				lvl_req_min: 1,
-				lvl_req_max: 5,
-				hp_min: 1000,
-				hp_max: 10000
-			}
+		const armor_config = await prisma.armorConfig.createMany({
+			data: [
+				{
+					id_skill_config: 5,
+					def_min: 1,
+					def_max: 10,
+					lvl_req_min: 1,
+					lvl_req_max: 5,
+					hp_min: 1000,
+					hp_max: 10000
+				},
+				{
+					id_skill_config: 6,
+					def_min: 5,
+					def_max: 10,
+					lvl_req_min: 2,
+					lvl_req_max: 10,
+					hp_min: 1000,
+					hp_max: 5000
+				},
+				{
+					id_skill_config: 7,
+					def_min: 7,
+					def_max: 14,
+					lvl_req_min: 3,
+					lvl_req_max: 15,
+					hp_min: 1000,
+					hp_max: 2500
+				}
+			]
 		})
 		console.log((armor_config ? "Success" : "Fail") + " init ArmorConfig")
 
