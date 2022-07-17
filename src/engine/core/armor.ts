@@ -5,7 +5,7 @@ import { Player_get } from "./user"
 
 const prisma = new PrismaClient()
 
-export async function Armor_Config_Get(skill: any) {
+async function Armor_Config_Get(skill: any) {
     const weapon_config_get = await prisma.armorConfig.findFirst({
         where: {
             id_skill_config: skill.payload.command
