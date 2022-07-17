@@ -23,8 +23,8 @@ export async function Weapon_Create(context:any, skill: any) {
             id_skill_config: skill.payload.command,
             id_damage_type: 1,
             lvl: randomInt(weapon_config_get?.lvl_req_min || 0, weapon_config_get?.lvl_req_max || 5),
-            atk_min: randomInt(weapon_config_get?.atk_min || 0, weapon_config_get?.lvl_req_max || 5),
-            atk_max: randomInt(weapon_config_get?.atk_min || 0, weapon_config_get?.atk_max || 5),
+            atk_min: weapon_config_get?.atk_min || 1,
+            atk_max: randomInt(weapon_config_get?.atk_min+1, weapon_config_get?.atk_max || 5),
             hp: randomInt(weapon_config_get?.hp_min || 0, weapon_config_get?.hp_max || 5),
             name: skill.text
         }

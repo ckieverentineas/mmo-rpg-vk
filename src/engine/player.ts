@@ -4,6 +4,7 @@ import { randomInt } from "crypto";
 import { Keyboard, KeyboardBuilder } from "vk-io";
 import { IQuestionMessageContext } from "vk-io-question";
 import { Player_get } from "./core/user";
+import { Battle_Init } from './core/battle';
 
 const prisma = new PrismaClient()
 
@@ -16,5 +17,8 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
             }
         })
         context.send(`Успешно удалены ${user_get?.idvk}`)
+    })
+    hearManager.hear(/битва/, async (context) => {
+        await Battle_Init(context)
     })
 }

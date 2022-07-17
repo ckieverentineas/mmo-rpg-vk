@@ -30,13 +30,13 @@ export async function Armor_Create(context:any, skill: any) {
                 id_damage_type: 1,
                 id_armor_type: armor_type[i].id,
                 lvl: randomInt(weapon_config_get?.lvl_req_min || 0, weapon_config_get?.lvl_req_max || 5),
-                def_min: randomInt(weapon_config_get?.def_min || 0, weapon_config_get?.def_max || 5),
-                def_max: randomInt(weapon_config_get?.def_min || 0, weapon_config_get?.def_max || 5),
+                def_min: weapon_config_get?.def_min || 0,
+                def_max: randomInt(weapon_config_get?.def_min+1 || 0, weapon_config_get?.def_max || 5),
                 hp: randomInt(weapon_config_get?.hp_min || 0, weapon_config_get?.hp_max || 5),
                 name: skill.text
             }
         })
-        await context.send(`Получена: ${weapon_create.name} - ${armor_type[i].label}
+        await context.send(`Получено: ${weapon_create.name} - ${armor_type[i].label}
         🛡${weapon_create.def_min}-${weapon_create.def_max} 🔧${weapon_create.hp}`)
     }
 }

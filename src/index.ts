@@ -16,6 +16,7 @@ import { Gen_Inline_Button } from './engine/core/button';
 import { Player_register } from './engine/core/user';
 import { Tutorial_Armor, Tutorial_License, Tutorial_Weapon, Tutorial_Welcome } from './engine/core/tutorial';
 import { Armor_Create } from './engine/core/armor';
+import { Battle_Init } from './engine/core/battle';
 
 //авторизация
 const vk = new VK({
@@ -89,7 +90,36 @@ vk.updates.on('message_new', async (context, next) => {
 		const armor = await  Gen_Inline_Button(context, armor_type)
 		await Armor_Create(context, armor)
 		Tutorial_Armor(context)
-		
+		const battla = await context.question(`-Удачи Тебе Путник в этом нелегком пути - сказал некромант
+			Вы выходите из таверны, направляетесь к выходу из поселка, но вдруг вас кто-то окликает:
+			- О это снова ты! А ну иди сюда 
+			`,
+			{
+                keyboard: Keyboard.builder()
+                .textButton({
+                    label: 'Прикинуться невидимкой',
+                    payload: {
+                        command: 'invise'
+                    },
+                    color: 'secondary'
+                })
+                .row()
+                .textButton({
+                    label: 'Взять реванш',
+                    payload: {
+                        command: 'revenge'
+                    },
+                    color: 'secondary'
+                }).oneTime().inline()
+            }
+		)
+		if (battla.payload.command == 'invise') {
+			context.send(`К сожалению ваш инвиз оказался не рабочим, после прилета удара с зади...`)
+		}
+		context.send(`Приготовтесь к битве!`)
+		await Battle_Init(context)
+		context.send(`Пишите:
+		битва`)
 	}
 	return next();
 })
