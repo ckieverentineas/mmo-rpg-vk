@@ -28,7 +28,7 @@ const vk = new VK({
 //инициализация
 const questionManager = new QuestionManager();
 const hearManager = new HearManager<IQuestionMessageContext>();
-const prisma = new PrismaClient()
+export const prisma = new PrismaClient()
 
 /*prisma.$use(async (params, next) => {
 	console.log('This is middleware!')

@@ -1,9 +1,8 @@
 import { PrismaClient } from "@prisma/client"
 import { randomInt } from "crypto"
 import { Keyboard } from "vk-io"
+import { prisma } from "../.."
 import { Player_get } from "./user"
-
-const prisma = new PrismaClient()
 
 async function Armor_Config_Get(skill: any) {
     const weapon_config_get = await prisma.armorConfig.findFirst({

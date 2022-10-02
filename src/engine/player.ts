@@ -5,8 +5,8 @@ import { Keyboard, KeyboardBuilder } from "vk-io";
 import { IQuestionMessageContext } from "vk-io-question";
 import { Player_get } from "./core/user";
 import { Battle_Init } from './core/battle';
+import { prisma } from "..";
 
-const prisma = new PrismaClient()
 
 export function registerUserRoutes(hearManager: HearManager<IQuestionMessageContext>): void {
 	hearManager.hear(/удалиться/, async (context) => {

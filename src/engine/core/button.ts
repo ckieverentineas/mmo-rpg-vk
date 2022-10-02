@@ -1,7 +1,6 @@
 import { PrismaClient } from "@prisma/client"
 import { Keyboard } from "vk-io"
-
-const prisma = new PrismaClient()
+import { prisma } from "../.."
 
 export async function Gen_Inline_Button(context: any, weapon_type: any) {
     let checker = false

@@ -1,8 +1,7 @@
 import { PrismaClient } from "@prisma/client"
 import { randomInt } from "crypto"
 import { Keyboard } from "vk-io"
-
-const prisma = new PrismaClient()
+import { prisma } from "../.."
 
 export async function NPC_create() {
     const npc_config_get: any = await prisma.userConfig.findFirst({})

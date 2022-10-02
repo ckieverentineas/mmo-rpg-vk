@@ -3,8 +3,7 @@ import { HearManager } from "@vk-io/hear";
 import { randomInt } from "crypto";
 import { Keyboard, KeyboardBuilder } from "vk-io";
 import { IQuestionMessageContext } from "vk-io-question";
-
-const prisma = new PrismaClient()
+import { prisma } from ".."
 
 export function InitGameRoutes(hearManager: HearManager<IQuestionMessageContext>): void {
 	hearManager.hear(/init/, async (context) => {
@@ -246,5 +245,6 @@ export function InitGameRoutes(hearManager: HearManager<IQuestionMessageContext>
 		console.log((damage_type ? "Success" : "Fail") + " init DamageType")
 
 		context.send('Игра инициализированна успешно.')
+		await prisma.$disconnect()
 	})
 }

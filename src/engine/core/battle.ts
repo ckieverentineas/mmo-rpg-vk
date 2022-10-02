@@ -3,8 +3,7 @@ import { randomInt } from "crypto"
 import { Keyboard } from "vk-io"
 import { NPC_armor_create, NPC_create, NPC_weapon_create } from "./npc"
 import { Player_get } from "./user"
-
-const prisma = new PrismaClient()
+import { prisma } from "../.."
 
 export async function Battle_Init(context: any) {
     /*const battle_init = await prisma.battleRegistrator.create({

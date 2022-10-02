@@ -1,7 +1,6 @@
 import { PrismaClient } from "@prisma/client"
 import { Player_get } from "./user"
-
-const prisma = new PrismaClient()
+import { prisma } from "../.."
 
 export async function Skill_Create(context: any, skill: any) {
     const user_get: any = await Player_get(context.senderId)

@@ -1,7 +1,6 @@
 import { PrismaClient } from "@prisma/client"
 import { randomInt } from "crypto"
-
-const prisma = new PrismaClient()
+import { prisma } from "../.."
 
 export async function Player_get(idvk: number) {
     const user_get = await prisma.user.findFirst({
