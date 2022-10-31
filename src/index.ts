@@ -17,6 +17,8 @@ import { Player_register } from './engine/core/user';
 import { Tutorial_Armor, Tutorial_License, Tutorial_Weapon, Tutorial_Welcome } from './engine/core/tutorial';
 import { Armor_Create } from './engine/core/armor';
 import { Battle_Init } from './engine/core/battle';
+import { userInfo } from 'os';
+import { throws } from 'assert';
 
 //авторизация
 const vk = new VK({
@@ -45,10 +47,35 @@ vk.updates.on('message_new', hearManager.middleware);
 InitGameRoutes(hearManager)
 registerUserRoutes(hearManager)
 
-
+export class Player {
+	static context: any;
+	static user: any;
+	public static async build(context: any) : Promise<Player> {
+		const user = await prisma.user.findFirst({
+			where: {
+				idvk: context.senderId
+			},
+			include: {
+				Weapon: true,
+				Armor: true,
+				Skill: true
+			}
+		})
+		this.user = user
+		this.context = context
+		console.log(this.user)
+		return new Player()
+	}
+	async Printer() {
+		Player.context.send(`${Player.user.crdate}`)
+		console.log(`${Player.user.crdate}`)
+	}
+}
 //миддлевар для предварительной обработки сообщений
 vk.updates.on('message_new', async (context, next) => {
 	//проверяем есть ли пользователь в базах данных
+	const player = await Player.build(context)
+	await player.Printer()
 	const user_check = await prisma.user.findFirst({
 		where: {
 			idvk: context.senderId
