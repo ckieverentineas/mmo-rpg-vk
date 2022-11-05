@@ -67,14 +67,15 @@ export class Player {
 		async function Skill_Sync(arr: any,) {
 			async function Finder (id_skill_config: number) {
 				for (let i = 0; i < Player.user.Skill.length; i++) {
-					if (Player.user.Skill[i].id_skill_config == id_skill_config) {return Player.user.Skill[i]} else {return false}
+					if (Player.user.Skill[i].id_skill_config == id_skill_config) {return Player.user.Skill[i]} 
 				}
+				return false
 			}
 			let filter: any = []
 			let sync_on = false
 			for (let i = 0; i < arr.length; i++) {
 				if (!filter.includes(arr[i].id_skill_config)) {
-					const select_skill = await Finder(arr[i].id_skill_config)
+					let select_skill = await Finder(arr[i].id_skill_config)
 					if (select_skill) {
 						const skill_update = await prisma.skill.update({
 							where:	{	id:					select_skill?.id,		},
@@ -82,7 +83,8 @@ export class Player {
 										lvl: 				select_skill?.lvl		},
 						})
 						filter.push(arr[i].id_skill_config)
-					} else {
+					}
+					if (select_skill == false) {
 						const skill_create = await prisma.skill.create({
 							data:	{	id_user:			arr[i].id_user,
 										id_skill_config:	arr[i].id_skill_config,
