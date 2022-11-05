@@ -13,7 +13,7 @@ import { send } from 'process';
 import { Weapon_Create } from './engine/core/weapon';
 import { Skill_Create } from './engine/core/skill';
 import { Gen_Inline_Button } from './engine/core/button';
-import { Player_register } from './engine/core/user';
+import { Player, Player_register } from './engine/core/user';
 import { Tutorial_Armor, Tutorial_License, Tutorial_Weapon, Tutorial_Welcome } from './engine/core/tutorial';
 import { Armor_Create } from './engine/core/armor';
 import { Battle_Init } from './engine/core/battle';
@@ -47,42 +47,12 @@ vk.updates.on('message_new', hearManager.middleware);
 InitGameRoutes(hearManager)
 registerUserRoutes(hearManager)
 
-export class Player {
-	static context: any;
-	static user: any;
-	public static async build(context: any) : Promise<Player> {
-		const user = await prisma.user.findFirst({
-			where: {
-				idvk: context.senderId
-			},
-			include: {
-				Weapon: true,
-				Armor: true,
-				Skill: true
-			}
-		})
-		this.user = user
-		this.context = context
-		console.log(this.user)
-		return new Player()
-	}
-	async Printer() {
-		Player.context.send(`${Player.user.crdate}`)
-		console.log(`${Player.user.crdate}`)
-	}
-}
 //миддлевар для предварительной обработки сообщений
 vk.updates.on('message_new', async (context, next) => {
 	//проверяем есть ли пользователь в базах данных
 	const player = await Player.build(context)
-	await player.Printer()
-	const user_check = await prisma.user.findFirst({
-		where: {
-			idvk: context.senderId
-		}
-	})
 	//если пользователя нет, то начинаем регистрацию
-	if (!user_check) {
+	if (Player?.user?.idvk != context.senderId) {
 		//согласие на обработку данных
 		const offer = await Tutorial_License(context)
 		if (offer == false) {
@@ -103,7 +73,7 @@ vk.updates.on('message_new', async (context, next) => {
 		//Генерируем оружие игроку
 		await Weapon_Create(context, skill)
 		//Создаем скилл игрока для использования оружия
-		await Skill_Create(context, skill)
+		//await Skill_Create(context, skill)
 		//Заканчиваем обучение
 		await Tutorial_Weapon(context)
 		//получаем список брони
@@ -147,6 +117,9 @@ vk.updates.on('message_new', async (context, next) => {
 		await Battle_Init(context)
 		context.send(`Пишите:
 		битва`)
+	} else {
+		//await player?.Skill_Up_Armor()
+		await player.Save()
 	}
 	return next();
 })
