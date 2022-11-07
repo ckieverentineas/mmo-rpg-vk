@@ -7,7 +7,7 @@ import { Player, Player_get } from "./core/user";
 import { Battle_Init } from './core/battle';
 import { prisma } from "..";
 
-const event: any = []
+const event: string[] = []
 export function registerUserRoutes(hearManager: HearManager<IQuestionMessageContext>): void {
 	hearManager.hear(/удалиться/, async (context) => {
         const player = await Player.build(context)

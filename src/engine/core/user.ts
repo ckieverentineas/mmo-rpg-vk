@@ -21,14 +21,40 @@ export class Player {
 		this.context = context
 		return new Player()
 	}
-	
-	async Skill_Up_Weapon() {
-		const gen = randomInt(0,100)
-		console.log(gen)
-		if (gen > 1) {
-			const mod = randomInt(1,10)
-			Player.user.Skill[0].xp+= mod
-			Player.context.send(`Уровень владения оружием повышен на c ${Player.user.Skill[0].xp-mod} до ${Player.user.Skill[0].xp}`)
+	async Attack() {
+		async function Skill_Up_Weapon (id_skill_config: number) {
+			for (let i = 0; i < Player.user.Skill.length; i++) {
+				if (Player.user.Skill[i].id_skill_config == id_skill_config) {
+					const gen = randomInt(0,100)
+					if (gen >= 50) {
+						const mod = randomInt(1,10)
+						Player.user.Skill[i].xp+= mod
+						Player.context.send(`Уровень владения оружием повышен на c ${Player.user.Skill[0].xp-mod} до ${Player.user.Skill[0].xp}`)
+					}
+				} 
+			}
+		}
+		let dmg_sum = []
+		for (let i = 0; i < Player.user.Weapon.length; i++) {
+			Player.user.Weapon[i].hp--
+			const dmg = randomInt(Player.user.Weapon[i].atk_min, Player.user.Weapon[i].atk_max) 
+			await Skill_Up_Weapon(Player.user.Weapon[i].id_skill_config)
+			dmg_sum.push({name: Player.user.Weapon[i].name, dmg: dmg})
+		}
+		return dmg_sum
+	}
+	async Defense(){
+		async function Skill_Up_Armor (id_skill_config: number) {
+			for (let i = 0; i < Player.user.Skill.length; i++) {
+				if (Player.user.Skill[i].id_skill_config == id_skill_config) {
+					const gen = randomInt(0,100)
+					if (gen >= 50) {
+						const mod = randomInt(1,10)
+						Player.user.Skill[i].xp+= mod
+						Player.context.send(`Уровень владения оружием повышен на c ${Player.user.Skill[0].xp-mod} до ${Player.user.Skill[0].xp}`)
+					}
+				} 
+			}
 		}
 	}
 	async Skill_Up_Armor() {
