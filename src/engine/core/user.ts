@@ -4,9 +4,9 @@ import { Context } from "vk-io";
 import { prisma } from "../.."
 
 export class Player {
-	static context: any;
-	static user: any;
-	static hp_max: number;
+	context: any;
+	user: any;
+	hp_current: any;
 	public static async build(context: any) : Promise<Player> {
 		const user: any = await prisma.user.findFirst({
 			where: {
@@ -18,81 +18,80 @@ export class Player {
 				Skill: true
 			}
 		})
-		this.user = user
-		this.context = context
-		this.hp_max = user.hp
-		return new Player()
+		const instance = new Player()
+		instance.user = user
+		instance.context = context
+		instance.hp_current = user?.hp
+		return instance
 	}
 	async User_Sync() {
 		const user: any = await prisma.user.findFirst({
-			where:		{	idvk: 	Player.user.idvk	},
+			where:		{	idvk: 	this.user.idvk	},
 			include:	{	Weapon: true,
 							Armor:	true,
 							Skill:	true				}
 		})
 		console.log(`User data starting sync for getting new data..`)
-		Player.user = user
-		Player.hp_max = user.hp
+		this.user = user
+		this.hp_current = user.hp
 	}
 	private async Skill_Up(id_skill_config: number, name: string) {
-		for (let i = 0; i < Player.user.Skill.length; i++) {
-			if (Player.user.Skill[i].id_skill_config == id_skill_config) {
+		for (let i = 0; i < this.user.Skill.length; i++) {
+			if (this.user.Skill[i].id_skill_config == id_skill_config) {
 				const gen = randomInt(0,100)
 				if (gen >= 50) {
 					const mod = randomInt(1,10)
-					Player.user.Skill[i].xp+= mod
-					Player.context.send(`⚜Повышение ${name} на ${Player.user.Skill[0].xp - (Player.user.Skill[0].xp-mod)}`)
+					this.user.Skill[i].xp+= mod
+					this.context.send(`⚜Повышение ${name} на ${this.user.Skill[0].xp - (this.user.Skill[0].xp-mod)}`)
 				}
 			} 
 		}
 	}
 	async Print() {
-		const hp_current = Player.user.hp / Player.hp_max 
+		const bar_current = this.hp_current / this.user.hp
 		let bar = ''
 		for (let i = 0; i <= 1; i += 0.1) {
-			if (i < hp_current) {
-				bar += '⬛'
-			} else {
-				bar += '⬜'
-			}
+			bar += (i < bar_current) ? '⬛' : '⬜'
 		}
-		console.log(bar)
-		return `👤: ${bar}↺${(Player.user.hp / Player.hp_max * 100).toFixed(2)}% \n ❤${Player.user.hp.toFixed(2)}/${Player.hp_max.toFixed(2)} ⚔${Player.user.Weapon[0].atk_min}-${Player.user.Weapon[0].atk_max} 🔧${Player.user.Weapon[0].hp}`
+		return `👤: ${bar} ↺${(this.hp_current / this.user.hp * 100).toFixed(2)}%\n ❤${this.hp_current.toFixed(2)}/${this.user.hp.toFixed(2)} ⚔${this.user.Weapon[0].atk_min}-${this.user.Weapon[0].atk_max} 🔧${this.user.Weapon[0].hp}`
 	}
 	async Attack() {
 		let dmg_sum = []
-		for (let i = 0; i < Player.user.Weapon.length; i++) {
-			Player.user.Weapon[i].hp--
-			const dmg = randomInt(Player.user.Weapon[i].atk_min, Player.user.Weapon[i].atk_max) 
-			await this.Skill_Up(Player.user.Weapon[i].id_skill_config, Player.user.Weapon[i].name)
-			dmg_sum.push({name: Player.user.Weapon[i].name, dmg: dmg})
+		for (let i = 0; i < this.user.Weapon.length; i++) {
+			this.user.Weapon[i].hp--
+			const dmg = randomInt(this.user.Weapon[i].atk_min, this.user.Weapon[i].atk_max) 
+			await this.Skill_Up(this.user.Weapon[i].id_skill_config, this.user.Weapon[i].name)
+			dmg_sum.push({name: this.user.Weapon[i].name, dmg: dmg})
 		}
 		return dmg_sum
 	}
 	async Defense(atk: any){
 		for (let i = 0; i < atk.length; i++) {
 			const part = randomInt(0, 6)
-			Player.user.Armor[part].hp--
-			const def = randomInt(Player.user.Armor[part].def_min, Player.user.Armor[part].def_max)
-			Player.user.hp -= atk[i].dmg * (1 - def/100)
-			await this.Skill_Up(Player.user.Armor[part].id_skill_config, Player.user.Armor[i].name)
-			await Player.context.send(`🤖нанес 💥${(atk[i].dmg * (1 - def/100)).toFixed(2)} из ${atk[i].name}.`)
+			this.user.Armor[part].hp--
+			const def = randomInt(this.user.Armor[part].def_min, this.user.Armor[part].def_max)
+			this.hp_current -= atk[i].dmg * (1 - def/100)
+			await this.Skill_Up(this.user.Armor[part].id_skill_config, this.user.Armor[i].name)
+			await this.context.send(`🤖нанес 💥${(atk[i].dmg * (1 - def/100)).toFixed(2)} из ${atk[i].name}.`)
 		}
 	}
 	
 	async Save() {
-		async function Skill_Sync(arr: any,) {
-			async function Finder (id_skill_config: number) {
-				for (let i = 0; i < Player.user.Skill.length; i++) {
-					if (Player.user.Skill[i].id_skill_config == id_skill_config) {return Player.user.Skill[i]} 
+		async function Skill_Sync(arr: any, skill: any, context: any) {
+			async function Finder (id_skill_config: number, skill: any) {
+				if (skill.length > 0) {
+					for (let i = 0; i < skill.length; i++) {
+						if (skill[i].id_skill_config == id_skill_config) {return skill[i]} 
+					}
 				}
+				
 				return false
 			}
 			let filter: any = []
 			let sync_on = false
 			for (let i = 0; i < arr.length; i++) {
 				if (!filter.includes(arr[i].id_skill_config)) {
-					let select_skill = await Finder(arr[i].id_skill_config)
+					let select_skill = await Finder(arr[i].id_skill_config, skill)
 					if (select_skill) {
 						const skill_update = await prisma.skill.update({
 							where:	{	id:					select_skill?.id,		},
@@ -108,7 +107,7 @@ export class Player {
 										lvl:				0,
 										xp:					0						}	
 						})
-						await Player.context.send(`🏴‍☠Получен новый скилл: ${skill_create.id_skill_config}`)
+						await context.send(`🏴‍☠Получен новый скилл: ${skill_create.id_skill_config}`)
 						filter.push(arr[i].id_skill_config)
 						sync_on = true
 					}
@@ -117,35 +116,35 @@ export class Player {
 			return sync_on
 		}
 
-		const weapon = await Skill_Sync(Player.user.Weapon)
-		const armor = await Skill_Sync(Player.user.Armor)
+		const weapon = await Skill_Sync(this.user.Weapon, this.user.Skill, this.context)
+		const armor = await Skill_Sync(this.user.Armor, this.user.Skill, this.context)
 		if (weapon) { console.log(`Weapon skill created on server, need sync`) } else { console.log(`Weapon skill not need sync`) }
 		if (armor) { console.log(`Armor skill created on server, need sync`) } else { console.log(`Armor skill not need sync`) }
 		if (weapon || armor) {
 			await this.User_Sync()
 		}
 		const save_user = await prisma.user.update({
-			where:	{ id: Player.user.id },
-			data:	{	gold: Player.user.gold,
-						hp: Player.user.hp,
-						id_user_type: Player.user.id_user_type	}
+			where:	{ id: this.user.id },
+			data:	{	gold: this.user.gold,
+						hp: this.user.hp,
+						id_user_type: this.user.id_user_type	}
 		})
 		if (save_user) {
 			console.log(`User ${save_user.idvk} sync success`)
 		}
-		for (let i = 0; i < Player.user.Weapon.length; i++) {
+		for (let i = 0; i < this.user.Weapon.length; i++) {
 			const save_weapon = await prisma.weapon.update({
-				where:	{ id: Player.user.Weapon[i].id },
-				data:	{ hp: Player.user.Weapon[i].hp }
+				where:	{ id: this.user.Weapon[i].id },
+				data:	{ hp: this.user.Weapon[i].hp }
 			})
 			if (save_weapon) {
 				console.log(`Weapon ${save_weapon.name} sync success`)
 			}
 		}
-		for (let i = 0; i < Player.user.Armor.length; i++) {
+		for (let i = 0; i < this.user.Armor.length; i++) {
 			const save_armor = await prisma.armor.update({
-				where:	{ id: Player.user.Armor[i].id },
-				data:	{ hp: Player.user.Armor[i].hp }
+				where:	{ id: this.user.Armor[i].id },
+				data:	{ hp: this.user.Armor[i].hp }
 			})
 			if (save_armor) {
 				console.log(`Armor ${save_armor.name}-${save_armor.id} sync success`)

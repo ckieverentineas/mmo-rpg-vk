@@ -52,7 +52,7 @@ vk.updates.on('message_new', async (context, next) => {
 	//проверяем есть ли пользователь в базах данных
 	const player = await Player.build(context)
 	//если пользователя нет, то начинаем регистрацию
-	if (Player?.user?.idvk != context.senderId) {
+	if (player?.user?.idvk != context.senderId) {
 		//согласие на обработку данных
 		const offer = await Tutorial_License(context)
 		if (offer == false) {

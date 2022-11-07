@@ -14,7 +14,7 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
         console.log(JSON.stringify(player))
         const player_delete = await prisma.user.delete({
             where: {
-                id: Player.user.id
+                id: player.user.id
             }
         })
         if (player_delete) {
@@ -67,6 +67,7 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
                     const test = await player.Attack()
                     await player.Defense(test)
                 }
+                player.Save()
             }
             
         }
