@@ -46,10 +46,11 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
             
         }
         async function PVP_Init(context: any) {
+            const player = await Player.build(context)
             let fight_end = false
             while (fight_end == false) {
                 const turn = await context.question(`
-                        Events: ${event}`,
+                        ${await player.Print()}`,
                     {
                         keyboard: Keyboard.builder()
                         .textButton({   label: 'Атака',
@@ -63,6 +64,8 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
                 )
                 if (turn) {
                     event.push(`${context.senderId} did attack`)
+                    const test = await player.Attack()
+                    await player.Defense(test)
                 }
             }
             

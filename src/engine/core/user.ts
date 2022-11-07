@@ -6,8 +6,9 @@ import { prisma } from "../.."
 export class Player {
 	static context: any;
 	static user: any;
+	static hp_max: number;
 	public static async build(context: any) : Promise<Player> {
-		const user = await prisma.user.findFirst({
+		const user: any = await prisma.user.findFirst({
 			where: {
 				idvk: context.senderId
 			},
@@ -19,68 +20,11 @@ export class Player {
 		})
 		this.user = user
 		this.context = context
+		this.hp_max = user.hp
 		return new Player()
 	}
-	async Attack() {
-		async function Skill_Up_Weapon (id_skill_config: number) {
-			for (let i = 0; i < Player.user.Skill.length; i++) {
-				if (Player.user.Skill[i].id_skill_config == id_skill_config) {
-					const gen = randomInt(0,100)
-					if (gen >= 50) {
-						const mod = randomInt(1,10)
-						Player.user.Skill[i].xp+= mod
-						Player.context.send(`Уровень владения оружием повышен на c ${Player.user.Skill[0].xp-mod} до ${Player.user.Skill[0].xp}`)
-					}
-				} 
-			}
-		}
-		let dmg_sum = []
-		for (let i = 0; i < Player.user.Weapon.length; i++) {
-			Player.user.Weapon[i].hp--
-			const dmg = randomInt(Player.user.Weapon[i].atk_min, Player.user.Weapon[i].atk_max) 
-			await Skill_Up_Weapon(Player.user.Weapon[i].id_skill_config)
-			dmg_sum.push({name: Player.user.Weapon[i].name, dmg: dmg})
-		}
-		return dmg_sum
-	}
-	async Defense(){
-		async function Skill_Up_Armor (id_skill_config: number) {
-			for (let i = 0; i < Player.user.Skill.length; i++) {
-				if (Player.user.Skill[i].id_skill_config == id_skill_config) {
-					const gen = randomInt(0,100)
-					if (gen >= 50) {
-						const mod = randomInt(1,10)
-						Player.user.Skill[i].xp+= mod
-						Player.context.send(`Уровень владения оружием повышен на c ${Player.user.Skill[0].xp-mod} до ${Player.user.Skill[0].xp}`)
-					}
-				} 
-			}
-		}
-	}
-	async Skill_Up_Armor() {
-		async function Finder() {
-			//выбор части брони, по которой будет удар
-			const part = randomInt(0, Player.user.Armor.length)
-			for (let i = 0; i < Player.user.Skill.length; i++) {
-				if (Player.user.Skill[i].id_skill_config == Player.user.Armor[part].id_skill_config) {
-					//отправка индекса скилла, который будет на прокачке
-					return i
-				}
-			}
-			return false
-		}
-		//шанс прокачки
-		const gen = randomInt(0,100)
-		const target: any = Finder()
-		if (gen > 1 && target) {
-			//прокачка защитного скилла
-			const mod = randomInt(1,10)
-			Player.user.Skill[target].xp+= mod
-			Player.context.send(`Уровень владения броней повышен на c ${Player.user.Skill[target].xp-mod} до ${Player.user.Skill[target].xp}`)
-		}
-	}
 	async User_Sync() {
-		const user = await prisma.user.findFirst({
+		const user: any = await prisma.user.findFirst({
 			where:		{	idvk: 	Player.user.idvk	},
 			include:	{	Weapon: true,
 							Armor:	true,
@@ -88,7 +32,54 @@ export class Player {
 		})
 		console.log(`User data starting sync for getting new data..`)
 		Player.user = user
+		Player.hp_max = user.hp
 	}
+	private async Skill_Up(id_skill_config: number, name: string) {
+		for (let i = 0; i < Player.user.Skill.length; i++) {
+			if (Player.user.Skill[i].id_skill_config == id_skill_config) {
+				const gen = randomInt(0,100)
+				if (gen >= 50) {
+					const mod = randomInt(1,10)
+					Player.user.Skill[i].xp+= mod
+					Player.context.send(`⚜Повышение ${name} на ${Player.user.Skill[0].xp - (Player.user.Skill[0].xp-mod)}`)
+				}
+			} 
+		}
+	}
+	async Print() {
+		const hp_current = Player.user.hp / Player.hp_max 
+		let bar = ''
+		for (let i = 0; i <= 1; i += 0.1) {
+			if (i < hp_current) {
+				bar += '⬛'
+			} else {
+				bar += '⬜'
+			}
+		}
+		console.log(bar)
+		return `👤: ${bar}↺${(Player.user.hp / Player.hp_max * 100).toFixed(2)}% \n ❤${Player.user.hp.toFixed(2)}/${Player.hp_max.toFixed(2)} ⚔${Player.user.Weapon[0].atk_min}-${Player.user.Weapon[0].atk_max} 🔧${Player.user.Weapon[0].hp}`
+	}
+	async Attack() {
+		let dmg_sum = []
+		for (let i = 0; i < Player.user.Weapon.length; i++) {
+			Player.user.Weapon[i].hp--
+			const dmg = randomInt(Player.user.Weapon[i].atk_min, Player.user.Weapon[i].atk_max) 
+			await this.Skill_Up(Player.user.Weapon[i].id_skill_config, Player.user.Weapon[i].name)
+			dmg_sum.push({name: Player.user.Weapon[i].name, dmg: dmg})
+		}
+		return dmg_sum
+	}
+	async Defense(atk: any){
+		for (let i = 0; i < atk.length; i++) {
+			const part = randomInt(0, 6)
+			Player.user.Armor[part].hp--
+			const def = randomInt(Player.user.Armor[part].def_min, Player.user.Armor[part].def_max)
+			Player.user.hp -= atk[i].dmg * (1 - def/100)
+			await this.Skill_Up(Player.user.Armor[part].id_skill_config, Player.user.Armor[i].name)
+			await Player.context.send(`🤖нанес 💥${(atk[i].dmg * (1 - def/100)).toFixed(2)} из ${atk[i].name}.`)
+		}
+	}
+	
 	async Save() {
 		async function Skill_Sync(arr: any,) {
 			async function Finder (id_skill_config: number) {
