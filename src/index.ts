@@ -13,7 +13,7 @@ import { send } from 'process';
 import { Weapon_Create } from './engine/core/weapon';
 import { Skill_Create } from './engine/core/skill';
 import { Gen_Inline_Button } from './engine/core/button';
-import { Player, Player_register } from './engine/core/user';
+import { Player } from './engine/core/user';
 import { Tutorial_Armor, Tutorial_License, Tutorial_Weapon, Tutorial_Welcome } from './engine/core/tutorial';
 import { Armor_Create } from './engine/core/armor';
 import { Battle_Init } from './engine/core/battle';
@@ -52,14 +52,12 @@ vk.updates.on('message_new', async (context, next) => {
 	//проверяем есть ли пользователь в базах данных
 	const player = await Player.build(context)
 	//если пользователя нет, то начинаем регистрацию
-	if (player?.user?.idvk != context.senderId) {
+	if (player?.user?.Skill.length < 1) {
 		//согласие на обработку данных
 		const offer = await Tutorial_License(context)
 		if (offer == false) {
 			return
 		}
-		//регистрация игрока
-		await Player_register(context)
 		//предыстория
 		await Tutorial_Welcome(context)
 		//получаем список способностей
@@ -114,6 +112,8 @@ vk.updates.on('message_new', async (context, next) => {
 			context.send(`К сожалению ваш инвиз оказался не рабочим, после прилета удара сзади...`)
 		}
 		context.send(`Приготовтесь к битве!`)
+		await player.User_Sync()
+		await player.Save()
 		await Battle_Init(context)
 		context.send(`Пишите:
 		битва`)

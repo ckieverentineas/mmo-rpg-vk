@@ -41,7 +41,7 @@ export class Player {
 	}
 	async User_Sync() {
 		const user: any = await prisma.user.findFirst({
-			where:		{	idvk: 	this.user.idvk	},
+			where:		{	id: 	this.user.id	},
 			include:	{	Weapon: true,
 							Armor:	true,
 							Skill:	true				}
@@ -66,9 +66,9 @@ export class Player {
 		const bar_current = this.hp_current / this.user.hp
 		let bar = ''
 		for (let i = 0; i <= 1; i += 0.1) {
-			bar += (i < bar_current) ? '⬛' : '⬜'
+			bar += (i < bar_current) ? '🟥' : '◻'
 		}
-		return `${this.smile?.player}: ${bar} ↺${(this.hp_current / this.user.hp * 100).toFixed(2)}%\n ❤${this.hp_current.toFixed(2)}/${this.user.hp.toFixed(2)} ⚔${this.user.Weapon[0].atk_min}-${this.user.Weapon[0].atk_max} 🔧${this.user.Weapon[0].hp}`
+		return `${this.smile?.player}: ${bar} [${(this.hp_current / this.user.hp * 100).toFixed(2)}%]\n ❤${this.hp_current.toFixed(1)}/${this.user.hp} ⚔${this.user.Weapon[0].atk_min}-${this.user.Weapon[0].atk_max} 🔧${this.user.Weapon[0].hp} [Инициалы]`
 	}
 	async Attack() {
 		let dmg_sum = []
@@ -139,29 +139,22 @@ export class Player {
 		const save_user = await prisma.user.update({
 			where:	{ id: this.user.id },
 			data:	{	gold: this.user.gold,
-						hp: this.user.hp,
-						id_user_type: this.user.id_user_type	}
+						hp: this.user.hp,		}
 		})
 		if (save_user) {
-			console.log(`User ${save_user.idvk} sync success`)
+			console.log(`User ${save_user.id} sync success`)
 		}
 		for (let i = 0; i < this.user.Weapon.length; i++) {
 			const save_weapon = await prisma.weapon.update({
 				where:	{ id: this.user.Weapon[i].id },
 				data:	{ hp: this.user.Weapon[i].hp }
 			})
-			if (save_weapon) {
-				console.log(`Weapon ${save_weapon.name} sync success`)
-			}
 		}
 		for (let i = 0; i < this.user.Armor.length; i++) {
 			const save_armor = await prisma.armor.update({
 				where:	{ id: this.user.Armor[i].id },
 				data:	{ hp: this.user.Armor[i].hp }
 			})
-			if (save_armor) {
-				console.log(`Armor ${save_armor.name}-${save_armor.id} sync success`)
-			}
 		}
 	}
 }

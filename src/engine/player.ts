@@ -27,6 +27,12 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
     hearManager.hear(/битва/, async (context) => {
         const player = await Player.build(context)
         const npc = await NPC.build(context)
+        /*await npc.Save()
+        await npc.Create_Weapon()
+        await npc.Create_Armor()
+        await npc.Save()
+        await npc.User_Sync()
+        await npc.Save()*/
         let fight_end = false
         while (fight_end == false) {
             const turn = await context.question(`
@@ -48,7 +54,8 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
                 const atk_npc = await npc.Attack()
                 await player.Defense(atk_npc)
             }
-            player.Save()
+            await player.Save()
+            await npc.Save()
         }
     })
     hearManager.hear(/pvp/, async (context) => {

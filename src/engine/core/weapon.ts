@@ -15,7 +15,6 @@ async function Weapon_Config_Get(skill: any) {
 export async function Weapon_Create(context:any, skill: any) {
     const user_get: any = await Player_get(context.senderId)
     const weapon_config_get:any = await Weapon_Config_Get(skill)
-    console.log(user_get.id)
     const weapon_create = await prisma.weapon.create({
         data:{
             id_user: user_get?.id,

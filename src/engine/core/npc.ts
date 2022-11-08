@@ -5,45 +5,30 @@ import { prisma } from "../.."
 import { Player } from "./user"
 
 export class NPC extends Player {
-	public static async build(context: any) : Promise<Player> {
-		const config_user: any = await prisma.userConfig.findFirst({})
-        console.log("🚀 ~ file: npc.ts ~ line 10 ~ NPC ~ build ~ config_user", config_user)
-        const config_weapon: any = await prisma.weaponConfig.findMany({     include: {  skill_config: true  }   })
-        const config_armor: any = await prisma.armorConfig.findMany({     include: {  skill_config: true  }   })
-        
-        const select_weapon = randomInt(1, config_weapon.length)-1
-        const weapon = [{
-            id_skill_config:    config_weapon[select_weapon].id_skill_config,
-            id_damage_type:     1,
-            lvl:                randomInt(config_weapon[select_weapon].lvl_req_min, config_weapon[select_weapon].lvl_req_max),
-            atk_min:            config_weapon[select_weapon].atk_min,
-            atk_max:            randomInt(config_weapon[select_weapon].atk_min+1, config_weapon[select_weapon].atk_max),
-            hp:                 randomInt(config_weapon[select_weapon].hp_min, config_weapon[select_weapon].hp_max),           
-        }]
-        let armor = []
-        const select_armor = randomInt(1, config_armor.length)-1
-        const armor_type: any = await prisma.armorType.findMany()
-        for (let i= 0; i < armor_type.length; i++) {
-            const data: any = {
-                id_armor_type: armor_type[i].id,
-                id_skill_config: config_armor[select_armor].id_skill_config,
-                id_damage_type: 1,
-                lvl: randomInt(config_armor[select_armor].lvl_req_min, config_armor[select_armor].lvl_req_max),
-                def_min: config_armor[select_armor].def_min,
-                def_max: randomInt(config_armor[select_armor].def_min+1, config_armor[select_armor].def_max),
-                hp: randomInt(config_armor[select_armor].hp_min, config_armor[select_armor].hp_max),
-                name: armor_type[i].label
-            }
-            armor.push(data)
-        }
-        const user: any = {     idvk:           context.senderId,
-                                gold:           randomInt(config_user.gold_min, config_user.gold_max),
-                                hp:             randomInt(config_user.hp_min, config_user.hp_max),
-                                id_user_type:   2,
-                                Weapon:         weapon,
-                                Armor:          armor,
-                                Skill:          [{xp: 0, id_skill_config: 1, name: "Аннигиляторная пушка"}, {xp: 0, id_skill_config: 2, name: "Аннигиляторная пушка"},
-                                                {xp: 0, id_skill_config: 3, name: "Аннигиляторная пушка"}, {xp: 0, id_skill_config: 4, name: "Аннигиляторная пушка"}],                 }
+	public static async build(context: any) : Promise<NPC> {
+        const select_type: any = await prisma.userType.findFirst({	where: {	name: 'npc'	}	})
+		const validator: any = await prisma.user.findFirst({
+			where: 		{	idvk: context.senderId,
+							id_user_type: select_type.id	}
+		})
+		if (!validator) {
+			const user_config_get: any = await prisma.userConfig.findFirst({})
+			const user_create = await prisma.user.create({	
+				data: {		idvk: context.senderId,
+							gold: randomInt(user_config_get?.gold_min, user_config_get?.gold_max),
+							hp: randomInt(user_config_get?.hp_min, user_config_get?.hp_max),
+							id_user_type: select_type.id													}
+			})
+			console.log(`Created npc for user ${user_create.idvk}`)
+		}
+		const user: any = await prisma.user.findFirst({
+			where: 		{	idvk: context.senderId,
+							id_user_type: select_type.id	},
+			include: 	{	Weapon: true,
+							Armor: true,
+							Skill: true						}
+		})
+		console.log("🚀 ~ file: npc.ts ~ line 31 ~ NPC ~ build ~ user", user)
 		const instance = new NPC()
 		instance.user = user
 		instance.context = context
@@ -51,6 +36,40 @@ export class NPC extends Player {
         instance.smile = {	'player': '🤖', 'npc': '👤', 'skill_up': '🦾'	}
 		return instance
 	}
+    async Create_Weapon(): Promise<void>{
+        const weapon_config:any = await prisma.weaponConfig.findFirst({})
+        const weapon_create = await prisma.weapon.create({
+            data:{
+                id_user: this.user.id,
+                id_skill_config: weapon_config.id_skill_config,
+                id_damage_type: 1,
+                lvl: randomInt(weapon_config.lvl_req_min, weapon_config.lvl_req_max),
+                atk_min: weapon_config.atk_min,
+                atk_max: randomInt(weapon_config.atk_min+1, weapon_config.atk_max),
+                hp: randomInt(weapon_config.hp_min || 0, weapon_config.hp_max),
+                name: 'Оружие нафиг'
+            }
+        })
+    }
+    async Create_Armor(): Promise<void>{
+        const armor_config:any = await prisma.armorConfig.findFirst({})
+        const armor_type: any = await prisma.armorType.findMany({})
+        for (let i= 0; i < armor_type.length; i++) {
+            const weapon_create = await prisma.armor.create({
+                data:{
+                    id_user: this.user.id,
+                    id_skill_config: armor_config.id_skill_config,
+                    id_damage_type: 1,
+                    id_armor_type: armor_type[i].id,
+                    lvl: randomInt(armor_config.lvl_req_min, armor_config.lvl_req_max),
+                    def_min: armor_config.def_min,
+                    def_max: randomInt(armor_config.def_min+1, armor_config.def_max),
+                    hp: randomInt(armor_config.hp_min, armor_config.hp_max),
+                    name: 'Броня нафиг'
+                }
+            })
+        }
+    }
 }
 export async function NPC_create() {
     const npc_config_get: any = await prisma.userConfig.findFirst({})
