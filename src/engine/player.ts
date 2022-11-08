@@ -25,7 +25,31 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
         }
     })
     hearManager.hear(/битва/, async (context) => {
-        await Battle_Init(context)
+        const player = await Player.build(context)
+        const npc = await NPC.build(context)
+        let fight_end = false
+        while (fight_end == false) {
+            const turn = await context.question(`
+                    ${await player.Print()}\n ${await npc.Print()}`,
+                {
+                    keyboard: Keyboard.builder()
+                    .textButton({   label: 'Атака',
+                                    payload: {  command: 'attack'   },
+                                    color: 'secondary'                  }).row()
+                    .textButton({   label: 'Отмена',
+                                    payload: {  command: 'back' },
+                                    color: 'secondary'
+                                                                        }).oneTime()
+                }
+            )
+            if (turn) {
+                const atk_player = await player.Attack()
+                await npc.Defense(atk_player)
+                const atk_npc = await npc.Attack()
+                await player.Defense(atk_npc)
+            }
+            player.Save()
+        }
     })
     hearManager.hear(/pvp/, async (context) => {
         const init_fight = await context.question(`
@@ -68,6 +92,7 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
                     event.push(`${context.senderId} did attack`)
                     const test = await player.Attack()
                     await player.Defense(test)
+                    context.send(`${await npc.Print()}`)
                 }
                 player.Save()
             }

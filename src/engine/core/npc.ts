@@ -7,49 +7,48 @@ import { Player } from "./user"
 export class NPC extends Player {
 	public static async build(context: any) : Promise<Player> {
 		const config_user: any = await prisma.userConfig.findFirst({})
-        const config_skill: any = await prisma.skillConfig.findMany({
-            include: {      WeaponConfig: true,
-                            ArmorConfig: true,
-                            skill_category: true    }
-        })
-        const select_weapon = randomInt(1, config_skill.WeaponConfig.length)-1
+        console.log("🚀 ~ file: npc.ts ~ line 10 ~ NPC ~ build ~ config_user", config_user)
+        const config_weapon: any = await prisma.weaponConfig.findMany({     include: {  skill_config: true  }   })
+        const config_armor: any = await prisma.armorConfig.findMany({     include: {  skill_config: true  }   })
+        
+        const select_weapon = randomInt(1, config_weapon.length)-1
         const weapon = [{
-            id_skill_config:    config_skill.WeaponConfig[select_weapon].id_skill_config,
-            id_damage_type:     config_skill.WeaponConfig[select_weapon].id_damage_type,
-            lvl:                randomInt(config_skill.WeaponConfig[select_weapon].lvl_req_min, config_skill.WeaponConfig[select_weapon].lvl_req_max),
-            atk_min:            config_skill.WeaponConfig[select_weapon].atk_min,
-            atk_max:            randomInt(config_skill.WeaponConfig[select_weapon].atk_min+1, config_skill.WeaponConfig[select_weapon].atk_max),
-            hp:                 randomInt(config_skill.WeaponConfig[select_weapon].hp_min, config_skill.WeaponConfig[select_weapon].hp_max),           
+            id_skill_config:    config_weapon[select_weapon].id_skill_config,
+            id_damage_type:     1,
+            lvl:                randomInt(config_weapon[select_weapon].lvl_req_min, config_weapon[select_weapon].lvl_req_max),
+            atk_min:            config_weapon[select_weapon].atk_min,
+            atk_max:            randomInt(config_weapon[select_weapon].atk_min+1, config_weapon[select_weapon].atk_max),
+            hp:                 randomInt(config_weapon[select_weapon].hp_min, config_weapon[select_weapon].hp_max),           
         }]
         let armor = []
-        const select_armor = randomInt(1, config_skill.ArmorConfig.length)-1
+        const select_armor = randomInt(1, config_armor.length)-1
         const armor_type: any = await prisma.armorType.findMany()
         for (let i= 0; i < armor_type.length; i++) {
             const data: any = {
                 id_armor_type: armor_type[i].id,
-                id_skill_config: config_skill.ArmorConfig[select_armor].id_skill_config,
-                id_damage_type: config_skill.ArmorConfig[select_armor].id_damage_type,
-                lvl: randomInt(config_skill.ArmorConfig[select_armor].lvl_req_min, config_skill.ArmorConfig[select_armor].lvl_req_max),
-                def_min: config_skill.ArmorConfig[select_armor].def_min,
-                def_max: randomInt(config_skill.ArmorConfig[select_armor].def_min+1, config_skill.ArmorConfig[select_armor].def_max),
-                hp: randomInt(config_skill.ArmorConfig[select_armor].hp_min, config_skill.ArmorConfig[select_armor].hp_max),
+                id_skill_config: config_armor[select_armor].id_skill_config,
+                id_damage_type: 1,
+                lvl: randomInt(config_armor[select_armor].lvl_req_min, config_armor[select_armor].lvl_req_max),
+                def_min: config_armor[select_armor].def_min,
+                def_max: randomInt(config_armor[select_armor].def_min+1, config_armor[select_armor].def_max),
+                hp: randomInt(config_armor[select_armor].hp_min, config_armor[select_armor].hp_max),
                 name: armor_type[i].label
             }
             armor.push(data)
         }
-        const user: any = {     idvk:           config_user,
-                                gold:           config_user,
-                                hp:             config_user,
+        const user: any = {     idvk:           context.senderId,
+                                gold:           randomInt(config_user.gold_min, config_user.gold_max),
+                                hp:             randomInt(config_user.hp_min, config_user.hp_max),
                                 id_user_type:   2,
                                 Weapon:         weapon,
-                                Armor:          weapon,
-                                Skill:          [],             }
-        console.log("🚀 ~ file: npc.ts ~ line 47 ~ NPC ~ build ~ user", user)
-		const instance = new Player()
+                                Armor:          armor,
+                                Skill:          [{xp: 0, id_skill_config: 1, name: "Аннигиляторная пушка"}, {xp: 0, id_skill_config: 2, name: "Аннигиляторная пушка"},
+                                                {xp: 0, id_skill_config: 3, name: "Аннигиляторная пушка"}, {xp: 0, id_skill_config: 4, name: "Аннигиляторная пушка"}],                 }
+		const instance = new NPC()
 		instance.user = user
 		instance.context = context
 		instance.hp_current = user?.hp
-        
+        instance.smile = {	'player': '🤖', 'npc': '👤', 'skill_up': '🦾'	}
 		return instance
 	}
 }

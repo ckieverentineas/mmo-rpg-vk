@@ -7,21 +7,36 @@ export class Player {
 	context: any;
 	user: any;
 	hp_current: any;
+	smile: any;
 	public static async build(context: any) : Promise<Player> {
+		const select_type: any = await prisma.userType.findFirst({	where: {	name: 'player'	}	})
+		const validator: any = await prisma.user.findFirst({
+			where: 		{	idvk: context.senderId,
+							id_user_type: select_type.id	}
+		})
+		if (!validator) {
+			const user_config_get: any = await prisma.userConfig.findFirst({})
+			const user_create = await prisma.user.create({	
+				data: {		idvk: context.senderId,
+							gold: randomInt(user_config_get?.gold_min, user_config_get?.gold_max),
+							hp: randomInt(user_config_get?.hp_min, user_config_get?.hp_max),
+							id_user_type: select_type.id													}
+			})
+			context.send(`Получено золота: ${user_create.gold} \n Ваше здоровье: ${user_create.hp}`)
+			console.log(`Created account for user ${user_create.idvk}`)
+		}
 		const user: any = await prisma.user.findFirst({
-			where: {
-				idvk: context.senderId
-			},
-			include: {
-				Weapon: true,
-				Armor: true,
-				Skill: true
-			}
+			where: 		{	idvk: context.senderId,
+							id_user_type: select_type.id	},
+			include: 	{	Weapon: true,
+							Armor: true,
+							Skill: true						}
 		})
 		const instance = new Player()
 		instance.user = user
 		instance.context = context
 		instance.hp_current = user?.hp
+		instance.smile = {	'player': '👤', 'npc': '🤖', 'skill_up': '⚜'	}
 		return instance
 	}
 	async User_Sync() {
@@ -35,14 +50,14 @@ export class Player {
 		this.user = user
 		this.hp_current = user.hp
 	}
-	private async Skill_Up(id_skill_config: number, name: string) {
+	protected async Skill_Up(id_skill_config: number, name: string) {
 		for (let i = 0; i < this.user.Skill.length; i++) {
 			if (this.user.Skill[i].id_skill_config == id_skill_config) {
 				const gen = randomInt(0,100)
-				if (gen >= 50) {
+				if (gen >= 60) {
 					const mod = randomInt(1,10)
 					this.user.Skill[i].xp+= mod
-					this.context.send(`⚜Повышение ${name} на ${this.user.Skill[0].xp - (this.user.Skill[0].xp-mod)}`)
+					this.context.send(`${this.smile?.skill_up}Повышение ${name} на ${this.user.Skill[0].xp - (this.user.Skill[0].xp-mod)}`)
 				}
 			} 
 		}
@@ -53,7 +68,7 @@ export class Player {
 		for (let i = 0; i <= 1; i += 0.1) {
 			bar += (i < bar_current) ? '⬛' : '⬜'
 		}
-		return `👤: ${bar} ↺${(this.hp_current / this.user.hp * 100).toFixed(2)}%\n ❤${this.hp_current.toFixed(2)}/${this.user.hp.toFixed(2)} ⚔${this.user.Weapon[0].atk_min}-${this.user.Weapon[0].atk_max} 🔧${this.user.Weapon[0].hp}`
+		return `${this.smile?.player}: ${bar} ↺${(this.hp_current / this.user.hp * 100).toFixed(2)}%\n ❤${this.hp_current.toFixed(2)}/${this.user.hp.toFixed(2)} ⚔${this.user.Weapon[0].atk_min}-${this.user.Weapon[0].atk_max} 🔧${this.user.Weapon[0].hp}`
 	}
 	async Attack() {
 		let dmg_sum = []
@@ -72,17 +87,15 @@ export class Player {
 			const def = randomInt(this.user.Armor[part].def_min, this.user.Armor[part].def_max)
 			this.hp_current -= atk[i].dmg * (1 - def/100)
 			await this.Skill_Up(this.user.Armor[part].id_skill_config, this.user.Armor[i].name)
-			await this.context.send(`🤖нанес 💥${(atk[i].dmg * (1 - def/100)).toFixed(2)} из ${atk[i].name}.`)
+			await this.context.send(`${this.smile?.npc}нанес 💥${(atk[i].dmg * (1 - def/100)).toFixed(2)} из ${atk[i].name}.`)
 		}
 	}
 	
 	async Save() {
 		async function Skill_Sync(arr: any, skill: any, context: any) {
 			async function Finder (id_skill_config: number, skill: any) {
-				if (skill.length > 0) {
-					for (let i = 0; i < skill.length; i++) {
-						if (skill[i].id_skill_config == id_skill_config) {return skill[i]} 
-					}
+				for (let i = 0; i < skill.length; i++) {
+					if (skill[i].id_skill_config == id_skill_config) {return skill[i]} 
 				}
 				
 				return false
@@ -160,19 +173,4 @@ export async function Player_get(idvk: number) {
         }
     })
     return user_get
-}
-export async function Player_register(context:any) {
-    //регистрация пользователя
-		const user_config_get = await prisma.userConfig.findFirst({})
-		const user_create = await prisma.user.create({
-			data: {
-				idvk: context.senderId,
-				gold: randomInt(user_config_get?.gold_min||5, user_config_get?.gold_max||10),
-				hp: randomInt(user_config_get?.hp_min||5, user_config_get?.hp_max||10),
-				id_user_type: 1
-			}
-		})
-        context.send(`Получено золота: ${user_create.gold}
-            Ваше здоровье: ${user_create.hp}`)
-		console.log(`Created account for user ${user_create.idvk}`)
 }

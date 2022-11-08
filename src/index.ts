@@ -111,7 +111,7 @@ vk.updates.on('message_new', async (context, next) => {
             }
 		)
 		if (battla.payload.command == 'invise') {
-			context.send(`К сожалению ваш инвиз оказался не рабочим, после прилета удара с зади...`)
+			context.send(`К сожалению ваш инвиз оказался не рабочим, после прилета удара сзади...`)
 		}
 		context.send(`Приготовтесь к битве!`)
 		await Battle_Init(context)
