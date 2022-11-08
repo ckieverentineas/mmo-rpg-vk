@@ -6,6 +6,7 @@ import { IQuestionMessageContext } from "vk-io-question";
 import { Player, Player_get } from "./core/user";
 import { Battle_Init } from './core/battle';
 import { prisma } from "..";
+import { NPC } from "./core/npc";
 
 const event: string[] = []
 export function registerUserRoutes(hearManager: HearManager<IQuestionMessageContext>): void {
@@ -47,6 +48,7 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
         }
         async function PVP_Init(context: any) {
             const player = await Player.build(context)
+            const npc = await NPC.build(context)
             let fight_end = false
             while (fight_end == false) {
                 const turn = await context.question(`
