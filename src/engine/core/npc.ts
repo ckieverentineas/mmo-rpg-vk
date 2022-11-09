@@ -28,7 +28,6 @@ export class NPC extends Player {
 							Armor: true,
 							Skill: true						}
 		})
-		console.log("🚀 ~ file: npc.ts ~ line 31 ~ NPC ~ build ~ user", user)
 		const instance = new NPC()
 		instance.user = user
 		instance.context = context
@@ -36,40 +35,6 @@ export class NPC extends Player {
         instance.smile = {	'player': '🤖', 'npc': '👤', 'skill_up': '🦾'	}
 		return instance
 	}
-    async Create_Weapon(): Promise<void>{
-        const weapon_config:any = await prisma.weaponConfig.findFirst({})
-        const weapon_create = await prisma.weapon.create({
-            data:{
-                id_user: this.user.id,
-                id_skill_config: weapon_config.id_skill_config,
-                id_damage_type: 1,
-                lvl: randomInt(weapon_config.lvl_req_min, weapon_config.lvl_req_max),
-                atk_min: weapon_config.atk_min,
-                atk_max: randomInt(weapon_config.atk_min+1, weapon_config.atk_max),
-                hp: randomInt(weapon_config.hp_min || 0, weapon_config.hp_max),
-                name: 'Оружие нафиг'
-            }
-        })
-    }
-    async Create_Armor(): Promise<void>{
-        const armor_config:any = await prisma.armorConfig.findFirst({})
-        const armor_type: any = await prisma.armorType.findMany({})
-        for (let i= 0; i < armor_type.length; i++) {
-            const weapon_create = await prisma.armor.create({
-                data:{
-                    id_user: this.user.id,
-                    id_skill_config: armor_config.id_skill_config,
-                    id_damage_type: 1,
-                    id_armor_type: armor_type[i].id,
-                    lvl: randomInt(armor_config.lvl_req_min, armor_config.lvl_req_max),
-                    def_min: armor_config.def_min,
-                    def_max: randomInt(armor_config.def_min+1, armor_config.def_max),
-                    hp: randomInt(armor_config.hp_min, armor_config.hp_max),
-                    name: 'Броня нафиг'
-                }
-            })
-        }
-    }
 }
 export async function NPC_create() {
     const npc_config_get: any = await prisma.userConfig.findFirst({})

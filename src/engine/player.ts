@@ -106,4 +106,8 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
             
         }
     })
+    hearManager.hear(/craft/, async (context) => { 
+        const player = await Player.build(context)
+        await player.Craft()
+    })
 }

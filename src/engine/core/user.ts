@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client"
 import { randomInt } from "crypto"
 import { Context } from "vk-io";
 import { prisma } from "../.."
+import { Gen_Inline_Button } from "./button";
 
 export class Player {
 	context: any;
@@ -50,6 +51,42 @@ export class Player {
 		this.user = user
 		this.hp_current = user.hp
 	}
+	protected async Create_Armor(armor_skill: number, armor_type: number): Promise<void>{
+        const armor_config:any = await prisma.armorConfig.findFirst({	where: {id_skill_config: armor_skill},
+																		include: {skill_config: true}	})
+		const weapon_create = await prisma.armor.create({
+			data:{
+				id_user: this.user.id,
+				id_skill_config: armor_config.id_skill_config,
+				id_damage_type: 1,
+				id_armor_type: armor_type,
+				lvl: randomInt(armor_config.lvl_req_min, armor_config.lvl_req_max),
+				def_min: armor_config.def_min,
+				def_max: randomInt(armor_config.def_min+1, armor_config.def_max),
+				hp: randomInt(armor_config.hp_min, armor_config.hp_max),
+				name: armor_config.skill_config.label
+			}
+		})
+    }
+	protected async Create_Weapon(weapon_skill: number): Promise<void>{
+        const weapon_config:any = await prisma.weaponConfig.findFirst({	where: {id: weapon_skill},
+																		include: {skill_config: true}})
+        const weapon_create = await prisma.weapon.create({
+            data:{
+                id_user: this.user.id,
+                id_skill_config: weapon_config.id_skill_config,
+                id_damage_type: 1,
+                lvl: randomInt(weapon_config.lvl_req_min, weapon_config.lvl_req_max),
+                atk_min: weapon_config.atk_min,
+                atk_max: randomInt(weapon_config.atk_min+1, weapon_config.atk_max),
+                hp: randomInt(weapon_config.hp_min || 0, weapon_config.hp_max),
+                name: weapon_config.skill_config.label
+            }
+        })
+		if (weapon_create) {
+			this.context.send(`Получено оружие: ${weapon_create.name} ⚔${weapon_create.atk_min}-${weapon_create.atk_max} 🔧${weapon_create.hp}`)
+		}
+    }
 	protected async Skill_Up(id_skill_config: number, name: string) {
 		for (let i = 0; i < this.user.Skill.length; i++) {
 			if (this.user.Skill[i].id_skill_config == id_skill_config) {
@@ -61,6 +98,16 @@ export class Player {
 				}
 			} 
 		}
+	}
+	async Craft() {
+		const category = await prisma.skillCategory.findMany({})
+		const skill = await  Gen_Inline_Button(this.context, category, 'Выберите категорию:')
+		const skill_config = await prisma.skillConfig.findMany({	where: {	id_skill_category: skill.id}})
+		const skill_sel = await Gen_Inline_Button(this.context, skill_config, 'Что будем крафтить?')
+		const config: any = {	1: this.Create_Weapon,
+								2: this.Create_Armor	}
+		console.log("🚀 ~ file: user.ts ~ line 112 ~ Player ~ Craft ~ skill_sel.id_skill_category", skill_sel.id_skill_category)
+		config[skill_sel.id_skill_category](skill_sel.id, 1)
 	}
 	async Print() {
 		const bar_current = this.hp_current / this.user.hp

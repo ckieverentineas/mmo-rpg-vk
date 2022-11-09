@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client"
 import { Keyboard } from "vk-io"
 import { prisma } from "../.."
 
-export async function Gen_Inline_Button(context: any, weapon_type: any) {
+export async function Gen_Inline_Button(context: any, weapon_type: any, mesa: string) {
     let checker = false
     let counter = 0
     let current = 0
@@ -15,12 +15,9 @@ export async function Gen_Inline_Button(context: any, weapon_type: any) {
         const limit = 6
         let weapon_list = ''
         while (current < weapon_type.length && counter < limit ) {
-            keyboard.textButton({
-                label: weapon_type[current].label,
-                payload: {
-                    command: weapon_type[current].id
-                },
-                color: 'primary'
+            keyboard.textButton({   label: weapon_type[current].label,
+                                    payload: {  command: weapon_type[current]   },
+                                    color: 'primary'
             })
             weapon_list += `- ${weapon_type[current].description} \n`
             counter++
@@ -51,8 +48,7 @@ export async function Gen_Inline_Button(context: any, weapon_type: any) {
             },
             color: 'primary'
         })
-        
-        skill = await context.question(`${weapon_list}`,
+        skill = await context.question(`${mesa}\n${weapon_list}`,
                                             {
                                                 keyboard: keyboard.inline()
                                             }
@@ -75,7 +71,7 @@ export async function Gen_Inline_Button(context: any, weapon_type: any) {
                 continue
             }
             checker = true
-            return skill
+            return skill.payload.command
         }
     }
 }

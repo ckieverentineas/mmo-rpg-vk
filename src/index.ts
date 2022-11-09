@@ -67,7 +67,7 @@ vk.updates.on('message_new', async (context, next) => {
 			}
 		})
 		//генерируем клавиатуру для предоставления способностей игроку
-		const skill = await  Gen_Inline_Button(context, weapon_type)
+		const skill = await  Gen_Inline_Button(context, weapon_type, 'ddd')
 		//Генерируем оружие игроку
 		await Weapon_Create(context, skill)
 		//Создаем скилл игрока для использования оружия
@@ -82,7 +82,7 @@ vk.updates.on('message_new', async (context, next) => {
 		})
 		//генерируем клавиатуру для предоставления способностей игроку
 		context.send(`А теперь перейдем к выбору брони:`)
-		const armor = await  Gen_Inline_Button(context, armor_type)
+		const armor = await  Gen_Inline_Button(context, armor_type, 'ddd')
 		await Armor_Create(context, armor)
 		Tutorial_Armor(context)
 		const battla = await context.question(`-Удачи Тебе Путник в этом нелегком пути - сказал некромант
