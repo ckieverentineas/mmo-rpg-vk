@@ -7,268 +7,123 @@ import { prisma } from ".."
 
 export function InitGameRoutes(hearManager: HearManager<IQuestionMessageContext>): void {
 	hearManager.hear(/init/, async (context) => {
-		//user
-		const user_type1 = await prisma.userType.create({
-			data: {
-				name: 'player',
-				description: 'простой смертный человек',
-				label: 'Игрок'
-			}
-		})
-		const user_type2 = await prisma.userType.create({
-			data: {
-				name: 'npc',
-				description: 'простой смертный npc',
-				label: 'Искуственный Интеллект'
-			}
-		})
-		user_type1 && user_type2 ? console.log('Success init UserType on server') : console.log('Fail init UserType on server')
+		const user = [	{	gold: 10, gold_mod: 0,
+							user_type: {
+								create: {	name: 'player', description: 'простой смертный человек', label: 'Игрок'	}
+							}	
+						},{	gold: 10, gold_mod: 0.1, 
+							user_type: { 
+								create: { name: 'slime', description: 'cкользкая слизь гигантских размеров',label: 'Слизь'	}	
+							}	
+						}
+		]
 		
-		const user_config = await prisma.userConfig.create({
-			data: {
-				hp_min: 5,
-				hp_max: 10,
-				gold_min: 5,
-				gold_max: 10
+		for (const i in user) {
+			const game_config = await prisma.userConfig.create({	data: user[i]	})
+			if (!game_config) {context.send(`Ошибка при инициализации типов пользователей`)}
+		}
+		const skill_category = [	
+			{	name: 'body',	description: 'ваше собственное тело',	label: 'Тело'},
+			{	name: 'weapon',	description: 'экипировка, уничтожающая ваших неприятелей',	label: 'Оружие'},
+			{	name: 'armor',	description: 'экипировка, поглощающая десктруктивные воздействия против вас ', label: 'Броня'	}
+		]
+		for (const i in skill_category) {
+			const game_config = await prisma.skillCategory.create({	data: skill_category[i]	})
+			if (!game_config) {context.send(`Ошибка при инициализации категорий скиллов`)}
+		}
+		const body_config = [
+			{	atk: 0, atk_mod: 0, def: -100, def_mod: 0.9, health: 10, health_mod: 0.2, hidden: false,
+				skill_config: {	create: {	id_skill_category: 1, name: 'head',
+				description: 'часть тела вашей личности, в которой находится мозг и т.п.',
+				label: 'Голова', hidden: false												}	}	
+			},
+			{	atk: 0, atk_mod: 0, def: -50, def_mod: 0.5, health: 20, health_mod: 0.2, hidden: false,
+				skill_config: {	create: {	id_skill_category: 1, name: 'body',
+				description: 'часть тела вашей личности, в которой сосредоточены органы',
+				label: 'Туловище', hidden: false												}	}	
+			},
+			{	atk: 1.5, atk_mod: 0.2, def: -10, def_mod: 0.2, health: 10, health_mod: 0.2, hidden: false,
+				skill_config: {	create: {	id_skill_category: 1, name: 'arm_right',
+				description: 'часть тела вашей личности, в которой можно держать оосновное оружие',
+				label: 'Рука правая', hidden: false												}	}	
+			},
+			{	atk: 0.5, atk_mod: 0.1, def: -10, def_mod: 0.2, health: 10, health_mod: 0.2, hidden: false,
+				skill_config: {	create: {	id_skill_category: 1, name: 'arm_left',
+				description: 'часть тела вашей личности, в которой можно держать дополнительное оружие',
+				label: 'Рука Левая', hidden: false												}	}	
+			},
+			{	atk: 0, atk_mod: 0, def: -25, def_mod: 0.2, health: 10, health_mod: 0.2, hidden: false,
+				skill_config: {	create: {	id_skill_category: 1, name: 'leg_right',
+				description: 'часть тела вашей личности, позволяюшая передвигаться',
+				label: 'Нога правая', hidden: false												}	}	
+			},
+			{	atk: 0, atk_mod: 0, def: -25, def_mod: 0.2, health: 10, health_mod: 0.2, hidden: false,
+				skill_config: {	create: {	id_skill_category: 1, name: 'leg_left',
+				description: 'часть тела вашей личности, позволяюшая передвигаться',
+				label: 'Нога левая', hidden: false												}	}	
+			},
+			{	atk: 2, atk_mod: 0.3, def: -20, def_mod: 0.5, health: 10, health_mod: 0.2, hidden: false,
+				skill_config: {	create: {	id_skill_category: 1, name: 'boot_right',
+				description: 'часть тела вашей личности, которая позволяет стоять на земле',
+				label: 'Правый ботинок', hidden: false												}	}	
+			},
+			{	atk: 1, atk_mod: 0.5, def: -20, def_mod: 0.5, health: 10, health_mod: 0.2, hidden: false,
+				skill_config: {	create: {	id_skill_category: 1, name: 'boot_left',
+				description: 'часть тела вашей личности, которая позволяет стоять на земле',
+				label: 'Левый ботинок', hidden: false												}	}	
+			},
+		]
+		for (const i in body_config) {
+			const game_config = await prisma.bodyConfig.create({data: body_config[i]})
+			if (!game_config) {context.send(`Ошибка при инициализации частей тела`)}
+		}
+		const weapon_config = [	
+			{	atk: 4, atk_mod: 0.3, lvl: 1, lvl_mod: 0.5, hp: 1500, hp_mod: 0.9, hidden: false, skill_config: {
+				create: {	id_skill_category: 2, name: 'sword',
+							description: 'холодное оружие с ближним радуисом поражения',
+							label: 'Меч', hidden: false				}}												
+			},
+			{	atk: 5, atk_mod: 0.4, lvl: 1, lvl_mod: 0.5, hp: 1000, hp_mod: 0.9, hidden: false, skill_config: {
+				create: {	id_skill_category: 2, name: 'staff',
+							description: 'магическое оружие с дальним радуисом поражения',
+							label: 'Посох', hidden: false				}}												
+			},
+			{	atk: 6, atk_mod: 0.5, lvl: 1, lvl_mod: 0.5, hp: 750, hp_mod: 0.9, hidden: false, skill_config: {
+				create: {	id_skill_category: 2, name: 'pistol',
+							description: 'огнестрельное оружие с дальним радуисом поражения',
+							label: 'Пистолет', hidden: false				}}												
+			},
+			{	atk: 3, atk_mod: 0.7, lvl: 1, lvl_mod: 0.5, hp: 2000, hp_mod: 0.9, hidden: false, skill_config: {
+				create: {	id_skill_category: 2, name: 'cane',
+							description: 'боевое оружие с ближним радуисом поражения',
+							label: 'Трость', hidden: false				}}												
+			},
+		]
+		for (const i in weapon_config) {
+			const game_config = await prisma.weaponConfig.create({data: weapon_config[i]})
+			if (!game_config) {	context.send(`Ошибка при инициализации типов оружия`)	}
+		}
+		const armor_config = [
+			{	def: 10, def_mod: 0.5, lvl: 1, lvl_mod: 0.5, hp: 1000, hp_mod: 0.9, hidden: false, skill_config: {
+				create: {	id_skill_category: 3, name: 'armor_easy',
+							description: 'комплект брони защищает вас от легких царапин.',
+							label: 'Легкая броня', hidden: false			}}
+			},
+			{	def: 10, def_mod: 0.5, lvl: 1, lvl_mod: 0.5, hp: 1000, hp_mod: 0.9, hidden: false, skill_config: {
+				create: {	id_skill_category: 3, name: 'armor_medium',
+							description: 'комплект брони защищает вас кровоточащих ударов.',
+							label: 'Средняя броня', hidden: false			}}
+			},
+			{	def: 10, def_mod: 0.5, lvl: 1, lvl_mod: 0.5, hp: 1000, hp_mod: 0.9, hidden: false, skill_config: {
+				create: {	id_skill_category: 3, name: 'armor_hard',
+							description: 'комплект брони защищает от стрел и пробивающего оружия.',
+							label: 'Тяжелая броня', hidden: false			}}
 			}
-		})
-		user_config ? console.log('Success init UserConfig on server') : console.log('Fail init UserConfig on server')
-
-		const skill_category1 = await prisma.skillCategory.create({
-			data: {
-				name: 'weapon',
-				description: 'Все, что позволяет ломать лицо противнику.',
-				label: 'Оружие'
-			}
-		})
-		const skill_category2 = await prisma.skillCategory.create({
-			data: {
-				name: 'armor',
-				description: 'Все, что позволит поглощать урон своего врага.',
-				label: 'Броня'
-			}
-		})
-		console.log((skill_category1 && skill_category2 ? "Success" : "Fail") + " init SkillCategory")
-
-		const skill_config1 = await prisma.skillConfig.create({
-			data: {
-				name: 'sword',
-				description: 'Меч - холодное оружие с ближним радуисом поражения',
-				label: 'Меч',
-				id_skill_category: 1,
-			}
-		})
-		const skill_config2 = await prisma.skillConfig.create({
-			data: {
-				name: 'staff',
-				description: 'Посох - магическое оружие с дальним радуисом поражения',
-				label: 'Посох',
-				id_skill_category: 1,
-			}
-		})
-		const skill_config3 = await prisma.skillConfig.create({
-			data: {
-				name: 'pistol',
-				description: 'Пистолет - огнестрельное оружие с дальним радуисом поражения',
-				label: 'Пистолет',
-				id_skill_category: 1,
-			}
-		})
-		const skill_config4 = await prisma.skillConfig.create({
-			data: {
-				name: 'cane',
-				description: 'Трость - боевое оружие с ближним радуисом поражения',
-				label: 'Трость',
-				id_skill_category: 1,
-			}
-		})
-		const skill_config5 = await prisma.skillConfig.create({
-			data: {
-				name: 'armeasy',
-				description: 'Легкая броня - комплект брони защищает вас от легких царапин.',
-				label: 'Легкая броня',
-				id_skill_category: 2,
-			}
-		})
-		const skill_config6 = await prisma.skillConfig.create({
-			data: {
-				name: 'armmedium',
-				description: 'Средняя броня - комплект брони защищает вас кровоточащих ударов.',
-				label: 'Средняя броня',
-				id_skill_category: 2,
-			}
-		})
-		const skill_config7 = await prisma.skillConfig.create({
-			data: {
-				name: 'armhard',
-				description: 'Тяжелая броня - комплект брони защищает от стрел и пробивающего оружия.',
-				label: 'Тяжелая броня',
-				id_skill_category: 2,
-			}
-		})
-		
-		console.log((skill_config1 && skill_config2 && skill_config3 && skill_config4 && skill_config5 && skill_config6 && skill_config7 ? "Success" : "Fail") + " init SkillConfig")
-
-		const weapon_config1 = await prisma.weaponConfig.create({
-			data: {
-				id_skill_config: 1,
-				atk_min: 1,
-				atk_max: 5,
-				lvl_req_min: 1,
-				lvl_req_max: 5,
-				hp_min: 100,
-				hp_max: 1500
-			}
-		})
-		const weapon_config2 = await prisma.weaponConfig.create({
-			data: {
-				id_skill_config: 2,
-				atk_min: 2,
-				atk_max: 6,
-				lvl_req_min: 1,
-				lvl_req_max: 5,
-				hp_min: 100,
-				hp_max: 1000
-			}
-		})
-		const weapon_config3 = await prisma.weaponConfig.create({
-			data: {
-				id_skill_config: 3,
-				atk_min: 2,
-				atk_max: 7,
-				lvl_req_min: 1,
-				lvl_req_max: 5,
-				hp_min: 100,
-				hp_max: 700
-			}
-		})
-		const weapon_config4 = await prisma.weaponConfig.create({
-			data: {
-				id_skill_config: 4,
-				atk_min: 1,
-				atk_max: 4,
-				lvl_req_min: 1,
-				lvl_req_max: 5,
-				hp_min: 100,
-				hp_max: 2000
-			}
-		})
-
-		weapon_config1 && weapon_config2 && weapon_config3 && weapon_config4 ? console.log('Success init WeaponConfig on server') : console.log('Fail init WeaponConfig on server')
-	
-		const armor_type1 = await prisma.armorType.create({
-			data: {
-				name: 'helmet',
-				description: 'Шлем - часть комплекта доспехов, блокирующие урон по голове',
-				label: 'Шлем'
-			}
-		})
-		const armor_type2 = await prisma.armorType.create({
-			data: {
-				name: 'harness',
-				description: 'Нагрудник - часть комплекта доспехов, блокирующие урон по туловищу',
-				label: 'Нагрудник'
-			}
-		})
-		const armor_type3 = await prisma.armorType.create({
-			data: {
-				name: 'arm',
-				description: 'Поручи - часть комплекта доспехов, блокирующие урон по рукам',
-				label: 'Поручи'
-			}
-		})
-		const armor_type4 = await prisma.armorType.create({
-			data: {
-				name: 'gloves',
-				description: 'Перчатки - часть комплекта доспехов, блокирующие урон по кистям',
-				label: 'Перчатки'
-			}
-		})
-		const armor_type5 = await prisma.armorType.create({
-			data: {
-				name: 'thigh',
-				description: 'Хз че это - часть комплекта доспехов, блокирующие урон по голеням',
-				label: 'Набедренник'
-			}
-		})
-		const armor_type6 = await prisma.armorType.create({
-			data: {
-				name: 'shin',
-				description: 'Поножи - часть комплекта доспехов, блокирующие урон по ногам',
-				label: 'Поножи'
-			}
-		})
-		const armor_type7 = await prisma.armorType.create({
-			data: {
-				name: 'foot',
-				description: 'Ботинки - часть комплекта доспехов, блокирующие урон по ступням',
-				label: 'Ботинки'
-			}
-		})
-
-		console.log((armor_type1 && armor_type2 && armor_type3 && armor_type4 && armor_type5 && armor_type6 && armor_type7 ? "Success" : "Fail") + " init ArmorType")
-
-		const armor_config1 = await prisma.armorConfig.create({
-			data: {
-				id_skill_config: 5,
-				def_min: 1,
-				def_max: 10,
-				lvl_req_min: 1,
-				lvl_req_max: 5,
-				hp_min: 1000,
-				hp_max: 10000
-			}
-		})
-		const armor_config2 = await prisma.armorConfig.create({
-			data: {
-				id_skill_config: 6,
-				def_min: 5,
-				def_max: 10,
-				lvl_req_min: 2,
-				lvl_req_max: 10,
-				hp_min: 1000,
-				hp_max: 5000
-			}
-		})
-		const armor_config3 = await prisma.armorConfig.create({
-			data: {
-				id_skill_config: 7,
-				def_min: 7,
-				def_max: 14,
-				lvl_req_min: 3,
-				lvl_req_max: 15,
-				hp_min: 1000,
-				hp_max: 2500
-			}
-		})
-		console.log((armor_config1 && armor_config2 && armor_config3 ? "Success" : "Fail") + " init ArmorConfig")
-
-		const battle_type = await prisma.battleType.create({
-			data: {
-				name: 'pve',
-				description: 'битва против мобов',
-				label: 'Битва против мобов'
-			}
-		})
-		console.log((battle_type ? "Success" : "Fail") + " init BattleType")
-		
-		const damage_type1 = await prisma.damageType.create({
-			data: {
-				name: 'physical',
-				description: 'Физический урон - материальный урон по любому реальному обьекту.',
-				label: 'Физический урон'
-			}
-		})
-		const damage_type2 = await prisma.damageType.create({
-			data: {
-				name: 'magic',
-				description: 'Магический урон - проходит сквозь всё и не щадит даже нематериальное.',
-				label: 'Магический урон'
-			}
-		})
-		console.log((damage_type1 && damage_type2 ? "Success" : "Fail") + " init DamageType")
-
+		]
+		for (const i in armor_config) {
+			const game_config = await prisma.armorConfig.create({data: armor_config[i]})
+			if (!game_config) {context.send(`Ошибка при инициализации типов брони`)}
+		}
 		context.send('Игра инициализированна успешно.')
-		await prisma.$disconnect()
 	})
 }
