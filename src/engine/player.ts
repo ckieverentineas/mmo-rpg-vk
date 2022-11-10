@@ -3,19 +3,17 @@ import { HearManager } from "@vk-io/hear";
 import { randomInt } from "crypto";
 import { Keyboard, KeyboardBuilder } from "vk-io";
 import { IQuestionMessageContext } from "vk-io-question";
-import { Player, Player_get } from "./core/user";
 import { Battle_Init } from './core/battle';
 import { prisma } from "..";
-import { NPC } from "./core/npc";
 
 const event: string[] = []
 export function registerUserRoutes(hearManager: HearManager<IQuestionMessageContext>): void {
-	hearManager.hear(/удалиться/, async (context) => {
-        const player = await Player.build(context)
+	/*hearManager.hear(/удалиться/, async (context) => {
+        const player = await Player.build({ context })
         console.log(JSON.stringify(player))
         const player_delete = await prisma.user.delete({
             where: {
-                id: player.user.id
+                //id: player.user.id
             }
         })
         if (player_delete) {
@@ -25,14 +23,14 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
         }
     })
     hearManager.hear(/битва/, async (context) => {
-        const player = await Player.build(context)
+        const player = await Player.build({ context })
         const npc = await NPC.build(context)
         /*await npc.Save()
         await npc.Create_Weapon()
         await npc.Create_Armor()
         await npc.Save()
         await npc.User_Sync()
-        await npc.Save()*/
+        await npc.Save()*//*
         let fight_end = false
         while (fight_end == false) {
             const turn = await context.question(`
@@ -78,7 +76,7 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
             
         }
         async function PVP_Init(context: any) {
-            const player = await Player.build(context)
+            const player = await Player.build({ context })
             const npc = await NPC.build(context)
             let fight_end = false
             while (fight_end == false) {
@@ -107,7 +105,7 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
         }
     })
     hearManager.hear(/craft/, async (context) => { 
-        const player = await Player.build(context)
+        const player = await Player.build({ context })
         await player.Craft()
-    })
+    })*/
 }

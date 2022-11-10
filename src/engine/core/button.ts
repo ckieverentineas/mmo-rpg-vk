@@ -71,6 +71,7 @@ export async function Gen_Inline_Button(context: any, weapon_type: any, mesa: st
                 continue
             }
             checker = true
+            console.log("🚀 ~ file: button.ts ~ line 75 ~ Gen_Inline_Button ~ skill.payload.command", skill.payload.command)
             return skill.payload.command
         }
     }

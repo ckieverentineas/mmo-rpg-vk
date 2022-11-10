@@ -2,8 +2,7 @@ import { PrismaClient } from "@prisma/client"
 import { randomInt } from "crypto"
 import { Keyboard } from "vk-io"
 import { prisma } from "../.."
-import { Player } from "./user"
-
+/*
 export class NPC extends Player {
 	public static async build(context: any) : Promise<NPC> {
         const select_type: any = await prisma.userType.findFirst({	where: {	name: 'npc'	}	})
@@ -88,3 +87,4 @@ export async function NPC_armor_create() {
     }
     return npc_armor
 }
+*/

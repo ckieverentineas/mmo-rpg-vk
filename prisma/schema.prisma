@@ -10,51 +10,37 @@ datasource db {
   url      = "file:./dev.db"
 }
 
-//user
-
-model User {
-  id           Int      @id @default(autoincrement())
-  idvk         Int      
-  user_type    UserType @relation(fields: [id_user_type], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  id_user_type Int
-  gold         Int
-  hp           Int
-  crdate       DateTime @default(now())
-  Weapon       Weapon[]
-  Armor        Armor[]
-  Battle       Battle[]
-  Skill        Skill[]
-}
-
 model UserType {
-  id          Int      @id @default(autoincrement())
-  name        String   @unique
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
   description String
   label       String
-  crdate      DateTime @default(now())
-  User        User[]
+  crdate      DateTime     @default(now())
+  UserConfig  UserConfig[]
 }
 
 model UserConfig {
-  id       Int      @id @default(autoincrement())
-  hp_min   Int
-  hp_max   Int
-  gold_min Int
-  gold_max Int
-  crdate   DateTime @default(now())
+  id           Int      @id @default(autoincrement())
+  user_type    UserType @relation(fields: [id_user_type], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_user_type Int
+  gold         Float
+  gold_mod     Float
+  crdate       DateTime @default(now())
+  User         User[]
 }
 
-//Skill
-
-model Skill {
-  id              Int         @id @default(autoincrement())
-  user            User        @relation(fields: [id_user], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  id_user         Int
-  skill_config    SkillConfig @relation(fields: [id_skill_config], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  id_skill_config Int
-  lvl             Int
-  xp              Int
-  crdate          DateTime    @default(now())
+model User {
+  id             String     @id @default(cuid())
+  user_config    UserConfig @relation(fields: [id_user_config], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_user_config Int
+  idvk           Int
+  gold           Float
+  nickname       String
+  crdate         DateTime   @default(now())
+  Weapon         Weapon[]
+  Armor          Armor[]
+  Skill          Skill[]
+  Body           Body[]
 }
 
 model SkillCategory {
@@ -68,127 +54,120 @@ model SkillCategory {
 
 model SkillConfig {
   id                Int            @id @default(autoincrement())
-  name              String
-  description       String
-  label             String
   skill_category    SkillCategory  @relation(fields: [id_skill_category], references: [id], onDelete: Cascade, onUpdate: Cascade)
   id_skill_category Int
+  name              String         @unique
+  description       String
+  label             String
+  hidden            Boolean        @default(false)
   crdate            DateTime       @default(now())
   Skill             Skill[]
   WeaponConfig      WeaponConfig[]
   ArmorConfig       ArmorConfig[]
-  Weapon            Weapon[]
-  Armor             Armor[]
+  BodyConfig        BodyConfig[]
 }
 
-//Weapon
-
-model Weapon {
+model BodyConfig {
   id              Int         @id @default(autoincrement())
-  user            User        @relation(fields: [id_user], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  id_user         Int
   skill_config    SkillConfig @relation(fields: [id_skill_config], references: [id], onDelete: Cascade, onUpdate: Cascade)
   id_skill_config Int
-  type_damage     DamageType  @relation(fields: [id_damage_type], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  id_damage_type  Int
-  lvl             Int
-  atk_min         Int
-  atk_max         Int
-  hp              Int
-  name            String
-  crdate          DateTime    @default(now())
-}
-
-model DamageType {
-  id          Int      @id @default(autoincrement())
-  name        String   @unique
-  description String
-  label       String
-  crdate      DateTime @default(now())
-  Weapon      Weapon[]
-  Armor       Armor[]
+  atk             Float
+  atk_mod         Float
+  def             Float
+  def_mod         Float
+  health          Float
+  health_mod      Float
+  hidden          Boolean     @default(false)
+  Body            Body[]
 }
 
 model WeaponConfig {
   id              Int         @id @default(autoincrement())
-  atk_min         Int
-  atk_max         Int
-  lvl_req_min     Int
-  lvl_req_max     Int
-  hp_min          Int
-  hp_max          Int
   skill_config    SkillConfig @relation(fields: [id_skill_config], references: [id], onDelete: Cascade, onUpdate: Cascade)
   id_skill_config Int
+  atk             Float
+  atk_mod         Float
+  lvl             Float
+  lvl_mod         Float
+  hp              Float
+  hp_mod          Float
+  hidden          Boolean     @default(false)
   crdate          DateTime    @default(now())
-}
-
-//Armor
-
-model Armor {
-  id              Int         @id @default(autoincrement())
-  user            User        @relation(fields: [id_user], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  id_user         Int
-  skill_config    SkillConfig @relation(fields: [id_skill_config], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  id_skill_config Int
-  type_damage     DamageType  @relation(fields: [id_damage_type], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  id_damage_type  Int
-  armor_type      ArmorType   @relation(fields: [id_armor_type], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  id_armor_type   Int
-  lvl             Int
-  def_min         Int
-  def_max         Int
-  hp              Int
-  name            String
-  crdate          DateTime    @default(now())
-}
-
-model ArmorType {
-  id          Int      @id @default(autoincrement())
-  name        String   @unique
-  description String
-  label       String
-  crdate      DateTime @default(now())
-  Armor       Armor[]
+  Weapon          Weapon[]
 }
 
 model ArmorConfig {
   id              Int         @id @default(autoincrement())
   skill_config    SkillConfig @relation(fields: [id_skill_config], references: [id], onDelete: Cascade, onUpdate: Cascade)
   id_skill_config Int
-  def_min         Int
-  def_max         Int
-  lvl_req_min     Int
-  lvl_req_max     Int
-  hp_min          Int
-  hp_max          Int
+  def             Float
+  def_mod         Float
+  lvl             Float
+  lvl_mod         Float
+  hp              Float
+  hp_mod          Float
+  hidden          Boolean     @default(false)
+  crdate          DateTime    @default(now())
+  Armor           Armor[]
+}
+
+model Body {
+  id             String     @id @default(cuid())
+  user           User       @relation(fields: [id_user], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_user        String
+  body_config    BodyConfig @relation(fields: [id_body_config], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_body_config Int
+  atk_min        Float
+  atk_max        Float
+  def_min        Float
+  def_max        Float
+  health         Float
+  name           String
+  crdate         DateTime   @default(now())
+  Weapon         Weapon[]
+  Armor          Armor[]
+}
+
+model Weapon {
+  id               String       @id @default(cuid())
+  user             User         @relation(fields: [id_user], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_user          String
+  weapon_config    WeaponConfig @relation(fields: [id_weapon_config], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_weapon_config Int
+  body             Body         @relation(fields: [id_body], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_body          String
+  lvl              Float
+  atk_min          Float
+  atk_max          Float
+  hp               Float
+  name             String
+  equip            Boolean      @default(false)
+  crdate           DateTime     @default(now())
+}
+
+model Armor {
+  id              String      @id @default(cuid())
+  user            User        @relation(fields: [id_user], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_user         String
+  armor_config    ArmorConfig @relation(fields: [id_armor_config], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_armor_config Int
+  body            Body        @relation(fields: [id_body], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_body         String
+  lvl             Float
+  def_min         Float
+  def_max         Float
+  hp              Float
+  name            String
+  equip           Boolean     @default(false)
   crdate          DateTime    @default(now())
 }
 
-//battle
-
-model Battle {
-  id                    Int               @id @default(autoincrement())
-  user                  User              @relation(fields: [id_user], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  id_user               Int
-  battle_registrator    BattleRegistrator @relation(fields: [id_battle_registrator], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  id_battle_registrator Int
-  hp_temp               Int
-  crdate                DateTime          @default(now())
-}
-
-model BattleType {
-  id                Int                 @id @default(autoincrement())
-  name              String              @unique
-  description       String
-  label             String
-  crdate            DateTime            @default(now())
-  BattleRegistrator BattleRegistrator[]
-}
-
-model BattleRegistrator {
-  id             Int        @id @default(autoincrement())
-  battle_type    BattleType @relation(fields: [id_battle_type], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  id_battle_type Int
-  crdate         DateTime   @default(now())
-  Battle         Battle[]
+model Skill {
+  id              String      @id @default(cuid())
+  user            User        @relation(fields: [id_user], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_user         String
+  skill_config    SkillConfig @relation(fields: [id_skill_config], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_skill_config Int
+  xp              Float
+  crdate          DateTime    @default(now())
 }

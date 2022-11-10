@@ -9,16 +9,7 @@ import { randomInt } from 'crypto';
 import { timeStamp } from 'console';
 import { registerUserRoutes } from './engine/player'
 import { InitGameRoutes } from './engine/init';
-import { send } from 'process';
-import { Weapon_Create } from './engine/core/weapon';
-import { Skill_Create } from './engine/core/skill';
-import { Gen_Inline_Button } from './engine/core/button';
 import { Player } from './engine/core/user';
-import { Tutorial_Armor, Tutorial_License, Tutorial_Weapon, Tutorial_Welcome } from './engine/core/tutorial';
-import { Armor_Create } from './engine/core/armor';
-import { Battle_Init } from './engine/core/battle';
-import { userInfo } from 'os';
-import { throws } from 'assert';
 
 //авторизация
 const vk = new VK({
@@ -49,10 +40,11 @@ registerUserRoutes(hearManager)
 
 //миддлевар для предварительной обработки сообщений
 vk.updates.on('message_new', async (context, next) => {
-	//проверяем есть ли пользователь в базах данных
 	const player = await Player.build(context)
+	//проверяем есть ли пользователь в базах данных
+	//const player = await Player.build({ context })
 	//если пользователя нет, то начинаем регистрацию
-	if (player?.user?.Skill.length < 1) {
+	/*if (!player) {
 		//согласие на обработку данных
 		const offer = await Tutorial_License(context)
 		if (offer == false) {
@@ -120,7 +112,8 @@ vk.updates.on('message_new', async (context, next) => {
 	} else {
 		//await player?.Skill_Up_Armor()
 		await player.Save()
-	}
+	}*/
+	//await player.Save()
 	return next();
 })
 
