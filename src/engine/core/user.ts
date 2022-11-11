@@ -3,9 +3,11 @@ import { randomInt } from "crypto";
 import { Context } from "vk-io";
 import { prisma } from "../.."
 import { Gen_Inline_Button } from "./button";
+
 async function random(min: number, max: number) {
 	return min + Math.random() * (max - min);
 }
+
 async function Load(context: any, target: string) {
 	const find_player: any = await prisma.userType.findFirst({where: {name: target}, include:{UserConfig: true}})
 	const user: any = await prisma.user.findFirst({
@@ -151,29 +153,26 @@ export class Player {
 		this.context.send(`${res}`)
 	}
 	async Craft() {
+		console.log(`Visit craft system by player: ${this.user.idvk}`)
 		async function Selector(user: any, body: any, context: any, data: any, pattern:string, id: number) {
 			let target: any = null
-			for (const i in data) {
-				if (data[i].pattern == id) { target = data[i].pattern }
-			}
+			for (const i in data) { if (data[i].pattern == id) { target = data[i].pattern } }
 			if (pattern == 'weapon_config') {
 				if (!target) {
 					const find = await prisma.weaponConfig.findFirst({ where: { id_skill_config: id, hidden: false } })
 					target = find
 				}
 				const create = await prisma.weapon.create({
-					data: {
-						id_user: user.id,
-						id_weapon_config: target.id,
-						id_body_config: body[randomInt(0, body.length)].id_body_config,
-						lvl: target.lvl + target.lvl * await random(-target.lvl_mod, target.lvl_mod),
-						atk_min: target.atk + target.atk * await random(-target.atk_mod, target.atk_mod),
-						atk_max: target.atk + target.atk * await random(-target.atk_mod, target.atk_mod),
-						hp: target.hp + target.hp * await random(-target.hp_mod, target.hp_mod),
-						name: 'weapon'
-					}
+					data: {	id_user: 			user.id,
+							id_weapon_config: 	target.id,
+							id_body_config: 	body[randomInt(0, body.length)].id_body_config,
+							lvl: 				target.lvl + target.lvl * await random(-target.lvl_mod, target.lvl_mod),
+							atk_min: 			target.atk + target.atk * await random(-target.atk_mod, target.atk_mod),
+							atk_max: 			target.atk + target.atk * await random(-target.atk_mod, target.atk_mod),
+							hp: 				target.hp + target.hp * await random(-target.hp_mod, target.hp_mod),
+							name: 				'weapon'																	}
 				})
-				await context.send(`Получено оружие: ${create.name} ⚔${create.atk_min}-${create.atk_max} 🔧${create.hp}`)
+				await context.send(`Получено оружие: ${create.name} ⚔${create.atk_min.toFixed(2)} - ${create.atk_max.toFixed(2)} 🔧${create.hp.toFixed(2)}`)
 			}
 			if (pattern == 'armor_config') {
 				if (!target) {
@@ -181,19 +180,16 @@ export class Player {
 					target = find
 				}
 				const create = await prisma.armor.create({
-					data: {
-						id_user: user.id,
-						id_armor_config: target.id,
-						id_body_config: body[randomInt(0, body.length)].id_body_config,
-						lvl: target.lvl + target.lvl * await random(-target.lvl_mod, target.lvl_mod),
-						def_min: target.def + target.def * await random(-target.def_mod, target.def_mod),
-						def_max: target.def + target.def * await random(-target.def_mod, target.def_mod),
-						hp: target.hp + target.hp * await random(-target.hp_mod, target.hp_mod),
-						name: 'armor'
-					}
-					
+					data: {	id_user: 			user.id,
+							id_armor_config: 	target.id,
+							id_body_config: 	body[randomInt(0, body.length)].id_body_config,
+							lvl: 				target.lvl + target.lvl * await random(-target.lvl_mod, target.lvl_mod),
+							def_min: 			target.def + target.def * await random(-target.def_mod, target.def_mod),
+							def_max: 			target.def + target.def * await random(-target.def_mod, target.def_mod),
+							hp: 				target.hp + target.hp * await random(-target.hp_mod, target.hp_mod),
+							name: 				'armor'																		}
 				})
-				await context.send(`Получено: ${create.name} 🛡${create.def_min}-${create.def_max} 🔧${create.hp}`)
+				await context.send(`Получено: ${create.name} 🛡${create.def_min.toFixed(2)} - ${create.def_max.toFixed(2)} 🔧${create.hp.toFixed(2)}`)
 			}
 			return false
 		} 
@@ -208,6 +204,18 @@ export class Player {
 		}
 		if (skill_sel.id_skill_category == 3) {
 			await Selector(this.user, this.body, this.context, this.armor, 'armor_config', skill_sel.id)
+		}
+	}
+	async Inventory() {
+		const category = await prisma.skillCategory.findMany({ where: { hidden: false } })
+		const skill = await  Gen_Inline_Button(this.context, category, 'Выберите категорию:')
+		console.log("🚀 ~ file: user.ts ~ line 209 ~ Player ~ Inventory ~ skill", skill)
+		if (!skill) {return false}
+		if (skill.id == 3) {
+			this.context.send(`${JSON.stringify(this.armor)}`)
+		}
+		if (skill.id == 2) {
+			this.context.send(`${JSON.stringify(this.weapon)}`)
 		}
 	}
 }

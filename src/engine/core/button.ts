@@ -27,31 +27,18 @@ export async function Gen_Inline_Button(context: any, weapon_type: any, mesa: st
             }
         }
         keyboard.row()
-        .textButton({
-            label: '<',
-            payload: {
-                command: "left"
-            },
-            color: 'primary'
-        })
-        .textButton({
-            label: 'назад',
-            payload: {
-                command: 'back'
-            },
-            color: 'primary'
-        })
-        .textButton({
-            label: '>',
-            payload: {
-                command: 'right'
-            },
-            color: 'primary'
-        })
-        skill = await context.question(`${mesa}\n${weapon_list}`,
-                                            {
-                                                keyboard: keyboard.inline()
-                                            }
+        .textButton({   label: '<',
+                        payload: { command: "left" },
+                        color: 'primary'              })
+        .textButton({   label: 'назад',
+                        payload: { command: 'back' },
+                        color: 'primary'              })
+        .textButton({   label: '>',
+                        payload: { command: 'right' },
+                        color: 'primary'              })
+        skill = await context.question(
+            `${mesa}\n${weapon_list}`,
+            { keyboard: keyboard.inline() }
         )
         if (!skill.payload) {
             context.send('Жмите по inline кнопкам!')
@@ -66,12 +53,10 @@ export async function Gen_Inline_Button(context: any, weapon_type: any, mesa: st
                 continue
             }
             if (skill.payload.command == 'right') {
-                console.log('test ' + modif + ' total:' + weapon_type.length)
                 modif+limit < weapon_type.length ? modif+=limit: context.send('Впереди ничего нет')
                 continue
             }
             checker = true
-            console.log("🚀 ~ file: button.ts ~ line 75 ~ Gen_Inline_Button ~ skill.payload.command", skill.payload.command)
             return skill.payload.command
         }
     }
