@@ -19,7 +19,7 @@ export async function Gen_Inline_Button(context: any, weapon_type: any, mesa: st
                                     payload: {  command: weapon_type[current]   },
                                     color: 'primary'
             })
-            weapon_list += `- ${weapon_type[current].description} \n`
+            weapon_list += `${weapon_type[current].label} - ${weapon_type[current].description} \n`
             counter++
             current++
             if (counter%2 == 0) {
@@ -59,7 +59,7 @@ export async function Gen_Inline_Button(context: any, weapon_type: any, mesa: st
             if (skill.payload.command == 'back') {
                 context.send('Вы нажали назад')
                 modif = 0
-                continue
+                return false
             }
             if (skill.payload.command == 'left') {
                 modif-limit >= 0 && modif < weapon_type.length ? modif-=limit : context.send('Позади ничего нет!')

@@ -1,7 +1,6 @@
 import { PrismaClient } from "@prisma/client"
 import { randomInt } from "crypto";
 import { Context } from "vk-io";
-import { Z_PARTIAL_FLUSH } from "zlib";
 import { prisma } from "../.."
 import { Gen_Inline_Button } from "./button";
 async function random(min: number, max: number) {
@@ -125,7 +124,7 @@ export class Player {
 				if (!filter.includes(target)) { 
 					const find = await Finder(skill, target)
 					if (!find) {
-						const add = await prisma.skill.create({ data: { id_user: data[i].user_id, id_skill_config: target}})
+						const add = await prisma.skill.create({ data: { id_user: data[i].id_user, id_skill_config: target}})
 						const info = await prisma.skillConfig.findFirst({ where: {id: target}})
 						await context.send(`${smile}Способность ${info?.label} теперь доступна.`)
 					} else { filter.push(target) }
@@ -142,5 +141,73 @@ export class Player {
 		await Anal(this.skill, this.body, this.context, 'body_config', this.smile.skill_up)
 		await Anal(this.skill, this.weapon, this.context, 'weapon_config', this.smile.skill_up)
 		await Anal(this.skill, this.armor, this.context, 'armor_config', this.smile.skill_up)
+	}
+	async Print() {
+		let res = ''
+		const ico: any = ['🧢', '👘', '🤛🏻', '🤜🏻', '🦵🏻', '🦵🏻', '👟', '👞']
+		for (const i in this.body) {
+			res += `${ico[i]}: ⚔${this.body[i].atk_min.toFixed(2)} - ${this.body[i].atk_max.toFixed(2)} 🛡${this.body[i].def_min.toFixed(2)} - ${this.body[i].def_max.toFixed(2)} ❤${this.body[i].health.toFixed(2)} \n`
+		}
+		this.context.send(`${res}`)
+	}
+	async Craft() {
+		async function Selector(user: any, body: any, context: any, data: any, pattern:string, id: number) {
+			let target: any = null
+			for (const i in data) {
+				if (data[i].pattern == id) { target = data[i].pattern }
+			}
+			if (pattern == 'weapon_config') {
+				if (!target) {
+					const find = await prisma.weaponConfig.findFirst({ where: { id_skill_config: id, hidden: false } })
+					target = find
+				}
+				const create = await prisma.weapon.create({
+					data: {
+						id_user: user.id,
+						id_weapon_config: target.id,
+						id_body_config: body[randomInt(0, body.length)].id_body_config,
+						lvl: target.lvl + target.lvl * await random(-target.lvl_mod, target.lvl_mod),
+						atk_min: target.atk + target.atk * await random(-target.atk_mod, target.atk_mod),
+						atk_max: target.atk + target.atk * await random(-target.atk_mod, target.atk_mod),
+						hp: target.hp + target.hp * await random(-target.hp_mod, target.hp_mod),
+						name: 'weapon'
+					}
+				})
+				await context.send(`Получено оружие: ${create.name} ⚔${create.atk_min}-${create.atk_max} 🔧${create.hp}`)
+			}
+			if (pattern == 'armor_config') {
+				if (!target) {
+					const find = await prisma.armorConfig.findFirst({ where: { id_skill_config: id, hidden: false } })
+					target = find
+				}
+				const create = await prisma.armor.create({
+					data: {
+						id_user: user.id,
+						id_armor_config: target.id,
+						id_body_config: body[randomInt(0, body.length)].id_body_config,
+						lvl: target.lvl + target.lvl * await random(-target.lvl_mod, target.lvl_mod),
+						def_min: target.def + target.def * await random(-target.def_mod, target.def_mod),
+						def_max: target.def + target.def * await random(-target.def_mod, target.def_mod),
+						hp: target.hp + target.hp * await random(-target.hp_mod, target.hp_mod),
+						name: 'armor'
+					}
+					
+				})
+				await context.send(`Получено: ${create.name} 🛡${create.def_min}-${create.def_max} 🔧${create.hp}`)
+			}
+			return false
+		} 
+		const category = await prisma.skillCategory.findMany({ where: { hidden: false } })
+		const skill = await  Gen_Inline_Button(this.context, category, 'Выберите категорию:')
+		if (!skill) {return false}
+		const skill_config = await prisma.skillConfig.findMany({ where: { id_skill_category: skill.id, hidden: false } })
+		const skill_sel = await Gen_Inline_Button(this.context, skill_config, 'Что будем крафтить?')
+		if (!skill_sel) {return false}
+		if (skill_sel.id_skill_category == 2) {
+			await Selector(this.user, this.body, this.context, this.weapon, 'weapon_config', skill_sel.id)
+		}
+		if (skill_sel.id_skill_category == 3) {
+			await Selector(this.user, this.body, this.context, this.armor, 'armor_config', skill_sel.id)
+		}
 	}
 }

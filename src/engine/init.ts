@@ -23,7 +23,7 @@ export function InitGameRoutes(hearManager: HearManager<IQuestionMessageContext>
 			if (!game_config) {context.send(`Ошибка при инициализации типов пользователей`)}
 		}
 		const skill_category = [	
-			{	name: 'body',	description: 'ваше собственное тело',	label: 'Тело'},
+			{	name: 'body',	description: 'ваше собственное тело',	label: 'Тело', hidden: true								},
 			{	name: 'weapon',	description: 'экипировка, уничтожающая ваших неприятелей',	label: 'Оружие'},
 			{	name: 'armor',	description: 'экипировка, поглощающая десктруктивные воздействия против вас ', label: 'Броня'	}
 		]

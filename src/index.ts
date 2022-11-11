@@ -41,8 +41,9 @@ registerUserRoutes(hearManager)
 //миддлевар для предварительной обработки сообщений
 vk.updates.on('message_new', async (context, next) => {
 	const player = await Player.build(context)
-	player.Detector()
-	player.Sync()
+	await player.Detector()
+	await player.Sync()
+	await player.Craft()
 	//проверяем есть ли пользователь в базах данных
 	//const player = await Player.build({ context })
 	//если пользователя нет, то начинаем регистрацию

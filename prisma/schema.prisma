@@ -48,6 +48,7 @@ model SkillCategory {
   name        String        @unique
   description String
   label       String
+  hidden          Boolean     @default(false)
   crdate      DateTime      @default(now())
   SkillConfig SkillConfig[]
 }
@@ -79,6 +80,8 @@ model BodyConfig {
   health_mod      Float
   hidden          Boolean     @default(false)
   Body            Body[]
+  Weapon          Weapon[]
+  Armor           Armor[]
 }
 
 model WeaponConfig {
@@ -124,8 +127,6 @@ model Body {
   health         Float
   name           String
   crdate         DateTime   @default(now())
-  Weapon         Weapon[]
-  Armor          Armor[]
 }
 
 model Weapon {
@@ -134,8 +135,8 @@ model Weapon {
   id_user          String
   weapon_config    WeaponConfig @relation(fields: [id_weapon_config], references: [id], onDelete: Cascade, onUpdate: Cascade)
   id_weapon_config Int
-  body             Body         @relation(fields: [id_body], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  id_body          String
+  body_config      BodyConfig   @relation(fields: [id_body_config], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_body_config   Int
   lvl              Float
   atk_min          Float
   atk_max          Float
@@ -143,6 +144,7 @@ model Weapon {
   name             String
   equip            Boolean      @default(false)
   crdate           DateTime     @default(now())
+
 }
 
 model Armor {
@@ -151,8 +153,8 @@ model Armor {
   id_user         String
   armor_config    ArmorConfig @relation(fields: [id_armor_config], references: [id], onDelete: Cascade, onUpdate: Cascade)
   id_armor_config Int
-  body            Body        @relation(fields: [id_body], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  id_body         String
+  body_config     BodyConfig  @relation(fields: [id_body_config], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id_body_config  Int
   lvl             Float
   def_min         Float
   def_max         Float
