@@ -1,5 +1,7 @@
 import { PrismaClient } from "@prisma/client"
+import { randomInt } from "crypto";
 import { Context } from "vk-io";
+import { Z_PARTIAL_FLUSH } from "zlib";
 import { prisma } from "../.."
 import { Gen_Inline_Button } from "./button";
 async function random(min: number, max: number) {
@@ -9,7 +11,10 @@ async function random(min: number, max: number) {
 export class Player {
 	protected context: any;
 	protected user: any;
-	protected hp_current: any;
+	protected body: any;
+	protected weapon: any;
+	protected armor: any;
+	protected skill: any;
 	protected smile: any;
 	public static async build(context: any): Promise<typeof instance>{
 		const find_player: any = await prisma.userType.findFirst({where: {name: 'player'}, include:{UserConfig: true}})
@@ -43,183 +48,136 @@ export class Player {
 		}
 		const user: any = await prisma.user.findFirst({
 			where: 		{	idvk: context.senderId,
-							id_user_config: find_player.UserConfig.id	},
-			include: 	{	Weapon: true,
-							Armor: true,
-							Skill: true						}
+							id_user_config: find_player.UserConfig[0].id	}
+		})
+		const body = await prisma.body.findMany({
+			where: 	 {	id_user: 	 	user.id	},
+			include: { 	body_config: 	true	}
+		})
+		const weapon = await prisma.weapon.findMany({
+			where: 	 {	id_user: 	 	user.id	},
+			include: { 	weapon_config: 	true	}
+		})
+		const armor = await prisma.armor.findMany({
+			where: 	 {	id_user: 	 	user.id	},
+			include: { 	armor_config: 	true	}
+		})
+		const skill = await prisma.skill.findMany({
+			where: 	 {	id_user: 	 	user.id	},
+			include: { 	skill_config: 	true	}
 		})
 		const instance = new Player()
-		instance.user = user
+		instance.user = {
+			id: user.id, idvk: user.idvk, id_user_config: user.id_user_config,
+			gold: user.gold, nickname: user.nickname, crdate: user.crdate
+		}
+		instance.body = body
+		instance.weapon = weapon
+		instance.armor = armor
+		instance.skill = skill
 		instance.context = context
-		instance.hp_current = user?.hp
 		instance.smile = {	'player': '👤', 'npc': '🤖', 'skill_up': '⚜'	}
 		return instance
 	}
-	async User_Sync() {
+	async Sync() {
+		console.log(`Sync data for player: ${this.user.idvk}`)
 		const user: any = await prisma.user.findFirst({
-			where:		{	id: 	this.user.id	},
-			include:	{	Weapon: true,
-							Armor:	true,
-							Skill:	true				}
+			where: 		{	id: this.user.id	}
 		})
-		console.log(`User data starting sync for getting new data..`)
-		this.user = user
-		this.hp_current = user.hp
-	}
-	/*
-	protected async Create_Armor(armor_skill: number, armor_type: number): Promise<void>{
-        const armor_config:any = await prisma.armorConfig.findFirst({	where: {id_skill_config: armor_skill},
-																		include: {skill_config: true}	})
-		const armor_create = await prisma.armor.create({
-			data:{
-				id_user: this.user.id,
-				id_skill_config: armor_config.id_skill_config,
-				id_damage_type: 1,
-				id_armor_type: armor_type,
-				lvl: randomInt(armor_config.lvl_req_min, armor_config.lvl_req_max),
-				def_min: armor_config.def_min,
-				def_max: randomInt(armor_config.def_min+1, armor_config.def_max),
-				hp: randomInt(armor_config.hp_min, armor_config.hp_max),
-				name: armor_config.skill_config.label
-			}
+		const body = await prisma.body.findMany({
+			where: 	 {	id_user: 	 	user.id	},
+			include: { 	body_config: 	true	}
 		})
-		await this.context.send(`Получено: ${armor_create.name} - ${armor_type}
-        🛡${armor_create.def_min}-${armor_create.def_max} 🔧${armor_create.hp}`)
-    }
-	protected async Create_Weapon(weapon_skill: number): Promise<void>{
-        const weapon_config:any = await prisma.weaponConfig.findFirst({	where: {id: weapon_skill},
-																		include: {skill_config: true}})
-        const weapon_create = await prisma.weapon.create({
-            data:{
-                id_user: this.user.id,
-                id_skill_config: weapon_config.id_skill_config,
-                id_damage_type: 1,
-                lvl: randomInt(weapon_config.lvl_req_min, weapon_config.lvl_req_max),
-                atk_min: weapon_config.atk_min,
-                atk_max: randomInt(weapon_config.atk_min+1, weapon_config.atk_max),
-                hp: randomInt(weapon_config.hp_min || 0, weapon_config.hp_max),
-                name: weapon_config.skill_config.label
-            }
-        })
-		if (weapon_create) {
-			await this.context.send(`Получено оружие: ${weapon_create.name} ⚔${weapon_create.atk_min}-${weapon_create.atk_max} 🔧${weapon_create.hp}`)
+		const weapon = await prisma.weapon.findMany({
+			where: 	 {	id_user: 	 	user.id	},
+			include: { 	weapon_config: 	true	}
+		})
+		const armor = await prisma.armor.findMany({
+			where: 	 {	id_user: 	 	user.id	},
+			include: { 	armor_config: 	true	}
+		})
+		const skill = await prisma.skill.findMany({
+			where: 	 {	id_user: 	 	user.id	},
+			include: { 	skill_config: 	true	}
+		})
+		const instance = new Player()
+		instance.user = {
+			id: user.id, idvk: user.idvk, id_user_config: user.id_user_config,
+			gold: user.gold, nickname: user.nickname, crdate: user.crdate
 		}
-    }
-	protected async Skill_Up(id_skill_config: number, name: string) {
-		for (let i = 0; i < this.user.Skill.length; i++) {
-			if (this.user.Skill[i].id_skill_config == id_skill_config) {
-				const gen = randomInt(0,100)
-				if (gen >= 60) {
-					const mod = randomInt(1,10)
-					this.user.Skill[i].xp+= mod
-					await this.context.send(`${this.smile?.skill_up}Повышение ${name} на ${this.user.Skill[0].xp - (this.user.Skill[0].xp-mod)}`)
-				}
-			} 
-		}
+		instance.body = body
+		instance.weapon = weapon
+		instance.armor = armor
+		instance.skill = skill
 	}
-	async Craft(): Promise<void> {
-		const category = await prisma.skillCategory.findMany({})
-		const skill = await  Gen_Inline_Button(this.context, category, 'Выберите категорию:')
-		const skill_config = await prisma.skillConfig.findMany({	where: {	id_skill_category: skill.id}})
-		const skill_sel = await Gen_Inline_Button(this.context, skill_config, 'Что будем крафтить?')
-		const config: any = {	1: this.Create_Weapon,
-								2: this.Create_Armor	}
-		console.log("🚀 ~ file: user.ts ~ line 111 ~ Player ~ Craft ~ skill_sel", skill_sel)
-		await config[skill_sel.id_skill_category](skill_sel.id, 1)
-	}
-	async Print() {
-		const bar_current = this.hp_current / this.user.hp
-		let bar = ''
-		for (let i = 0; i <= 1; i += 0.1) {
-			bar += (i < bar_current) ? '🟥' : '◻'
-		}
-		return `${this.smile?.player}: ${bar} [${(this.hp_current / this.user.hp * 100).toFixed(2)}%]\n ❤${this.hp_current.toFixed(1)}/${this.user.hp} ⚔${this.user.Weapon[0].atk_min}-${this.user.Weapon[0].atk_max} 🔧${this.user.Weapon[0].hp} [Инициалы]`
-	}
-	async Attack() {
-		let dmg_sum = []
-		for (let i = 0; i < this.user.Weapon.length; i++) {
-			this.user.Weapon[i].hp--
-			const dmg = randomInt(this.user.Weapon[i].atk_min, this.user.Weapon[i].atk_max) 
-			await this.Skill_Up(this.user.Weapon[i].id_skill_config, this.user.Weapon[i].name)
-			dmg_sum.push({name: this.user.Weapon[i].name, dmg: dmg})
-		}
-		return dmg_sum
-	}
-	async Defense(atk: any){
-		for (let i = 0; i < atk.length; i++) {
-			const part = randomInt(0, 6)
-			this.user.Armor[part].hp--
-			const def = randomInt(this.user.Armor[part].def_min, this.user.Armor[part].def_max)
-			this.hp_current -= atk[i].dmg * (1 - def/100)
-			await this.Skill_Up(this.user.Armor[part].id_skill_config, this.user.Armor[i].name)
-			await this.context.send(`${this.smile?.npc}нанес 💥${(atk[i].dmg * (1 - def/100)).toFixed(2)} из ${atk[i].name}.`)
-		}
-	}
-	
 	async Save() {
-		async function Skill_Sync(arr: any, skill: any, context: any) {
-			async function Finder (id_skill_config: number, skill: any) {
-				for (let i = 0; i < skill.length; i++) {
-					if (skill[i].id_skill_config == id_skill_config) {return skill[i]} 
-				}
-				
-				return false
-			}
-			let filter: any = []
-			let sync_on = false
-			for (let i = 0; i < arr.length; i++) {
-				if (!filter.includes(arr[i].id_skill_config)) {
-					let select_skill = await Finder(arr[i].id_skill_config, skill)
-					if (select_skill) {
-						const skill_update = await prisma.skill.update({
-							where:	{	id:					select_skill?.id,		},
-							data:	{	xp: 				select_skill?.xp,
-										lvl: 				select_skill?.lvl		},
-						})
-						filter.push(arr[i].id_skill_config)
-					}
-					if (select_skill == false) {
-						const skill_create = await prisma.skill.create({
-							data:	{	id_user:			arr[i].id_user,
-										id_skill_config:	arr[i].id_skill_config,
-										lvl:				0,
-										xp:					0						}	
-						})
-						await context.send(`🏴‍☠Получен новый скилл: ${skill_create.id_skill_config}`)
-						filter.push(arr[i].id_skill_config)
-						sync_on = true
-					}
-				}
-			}
-			return sync_on
-		}
-
-		const weapon = await Skill_Sync(this.user.Weapon, this.user.Skill, this.context)
-		const armor = await Skill_Sync(this.user.Armor, this.user.Skill, this.context)
-		if (weapon) { console.log(`Weapon skill created on server, need sync`) } else { console.log(`Weapon skill not need sync`) }
-		if (armor) { console.log(`Armor skill created on server, need sync`) } else { console.log(`Armor skill not need sync`) }
-		if (weapon || armor) {
-			await this.User_Sync()
-		}
-		const save_user = await prisma.user.update({
-			where:	{ id: this.user.id },
-			data:	{	gold: this.user.gold,
-						hp: this.user.hp,		}
-		})
-		if (save_user) {
-			console.log(`User ${save_user.id} sync success`)
-		}
-		for (let i = 0; i < this.user.Weapon.length; i++) {
-			const save_weapon = await prisma.weapon.update({
-				where:	{ id: this.user.Weapon[i].id },
-				data:	{ hp: this.user.Weapon[i].hp }
+		console.log(`Save status for player: ${this.user.idvk}`)
+		for (const i in this.user) {
+			const update = await prisma.user.update({
+				where:  { id: 	this.user.id },
+				data: 	{ gold: this.user.gold }
 			})
 		}
-		for (let i = 0; i < this.user.Armor.length; i++) {
-			const save_armor = await prisma.armor.update({
-				where:	{ id: this.user.Armor[i].id },
-				data:	{ hp: this.user.Armor[i].hp }
+		for(const i in this.weapon) {
+			const update = await prisma.weapon.update({
+				where: { id: 	this.weapon[i].id},
+				data:  { hp: 	this.weapon[i].hp}
 			})
 		}
-	}*/
+		for(const i in this.armor) {
+			const update = await prisma.armor.update({
+				where: { id: 	this.armor[i].id},
+				data:  { hp: 	this.armor[i].hp}
+			})
+		}
+		for (const i in this.skill) {
+			const update = await prisma.skill.update({
+                where: { id:     this.skill[i].id},
+                data:  { xp:     this.skill[i].xp}
+            })
+		}
+	}
+	async Detector() {
+		console.log(`Reseach new skills for player: ${this.user.idvk}`)
+		async function Finder(skill: any, id: number) {
+			for (const i in skill) {
+				if (skill[i].id_skill_config == id) { return true }
+			}
+			return false
+		} 
+		const filter: number[] = []
+		for (const i in this.body) {
+			const target: number = this.body[i].body_config.id_skill_config
+			if (!filter.includes(target)) { 
+				const find = await Finder(this.skill, target)
+				if (!find) {
+					const add = await prisma.skill.create({ data: { id_user: this.user.id, id_skill_config: target}})
+					const info = await prisma.skillConfig.findFirst({ where: {id: target}})
+					this.context.send(`${this.smile.skill_up}Способность ${info?.label} теперь доступна.`)
+				} else { filter.push(target) }
+			} else { continue }
+		}
+		for (const i in this.weapon) {
+			const target: number = this.weapon[i].weapon_config.id_skill_config
+			if (!filter.includes(target)) { 
+				const find = await Finder(this.skill, target)
+				if (!find) {
+					const add = await prisma.skill.create({ data: { id_user: this.user.id, id_skill_config: target}})
+					const info = await prisma.skillConfig.findFirst({ where: {id: target}})
+					this.context.send(`${this.smile.skill_up}Способность ${info?.label} теперь доступна.`)
+				} else { filter.push(target) }
+			} else { continue }
+		}
+		for (const i in this.armor) {
+			const target: number = this.armor[i].armor_config.id_skill_config
+			if (!filter.includes(target)) { 
+				const find = await Finder(this.skill, target)
+				if (!find) {
+					const add = await prisma.skill.create({ data: { id_user: this.user.id, id_skill_config: target}})
+					const info = await prisma.skillConfig.findFirst({ where: {id: target}})
+					this.context.send(`${this.smile.skill_up}Способность ${info?.label} теперь доступна.`)
+				} else { filter.push(target) }
+			} else { continue }
+		}
+	}
 }

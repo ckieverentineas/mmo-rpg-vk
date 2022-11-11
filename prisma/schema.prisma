@@ -168,6 +168,6 @@ model Skill {
   id_user         String
   skill_config    SkillConfig @relation(fields: [id_skill_config], references: [id], onDelete: Cascade, onUpdate: Cascade)
   id_skill_config Int
-  xp              Float
+  xp              Float       @default(0)
   crdate          DateTime    @default(now())
 }
