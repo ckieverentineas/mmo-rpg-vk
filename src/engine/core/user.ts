@@ -1,8 +1,8 @@
 import { PrismaClient } from "@prisma/client"
 import { randomInt } from "crypto";
-import { Context } from "vk-io";
+import { Context, Keyboard } from "vk-io";
 import { prisma } from "../.."
-import { Gen_Inline_Button } from "./button";
+import { Gen_Inline_Button, Gen_Inline_Button_Equipment } from "./button";
 
 async function random(min: number, max: number) {
 	return min + Math.random() * (max - min);
@@ -207,15 +207,23 @@ export class Player {
 		}
 	}
 	async Inventory() {
-		const category = await prisma.skillCategory.findMany({ where: { hidden: false } })
-		const skill = await  Gen_Inline_Button(this.context, category, 'Выберите категорию:')
-		console.log("🚀 ~ file: user.ts ~ line 209 ~ Player ~ Inventory ~ skill", skill)
-		if (!skill) {return false}
-		if (skill.id == 3) {
-			this.context.send(`${JSON.stringify(this.armor)}`)
+		let cat_stop = false
+		while (cat_stop == false) {
+			const category = await prisma.skillCategory.findMany({ where: { hidden: false } })
+			const skill = await  Gen_Inline_Button(this.context, category, 'Выберите категорию:')
+			if (!skill) {return false} else { cat_stop = true }
+			if (skill.id == 3) {
+				const pull: any = await Gen_Inline_Button_Equipment(this.armor, this.context, 'armor_config') 
+				cat_stop = pull?.cat_stop
+				this.armor = pull?.data
+			}
+			if (skill.id == 2) {
+				const pull: any = await Gen_Inline_Button_Equipment(this.weapon, this.context, 'weapon_config') 
+				cat_stop = pull?.cat_stop
+				this.weapon = pull?.data
+			}
+			
 		}
-		if (skill.id == 2) {
-			this.context.send(`${JSON.stringify(this.weapon)}`)
-		}
+		
 	}
 }

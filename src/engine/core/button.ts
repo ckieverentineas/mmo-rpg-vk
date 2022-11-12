@@ -61,3 +61,88 @@ export async function Gen_Inline_Button(context: any, weapon_type: any, mesa: st
         }
     }
 }
+
+export async function Gen_Inline_Button_Equipment(data: any, context: any, pattern: string) {
+    let stopper = false
+	let modif = 0
+	const lim = 3 
+    const configs: any = { 'armor_config': ['def_min', 'def_max'], 'weapon_config': ['atk_min', 'atk_max']}
+    while (stopper == false) {
+        let i = modif
+        let counter = 0
+        while (i < data.length && counter <lim) {
+            let keyboard = Keyboard.builder()
+            if (data[i].equip) {
+                keyboard
+                .textButton({ 	label: 'Снять',
+                                payload: { command: `${i}` },
+                                color: 'secondary'			   })
+                .textButton({	label: 'Разобрать',
+                                payload: { command: `${i}` },
+                                color: 'secondary'			   })
+                .oneTime().inline()
+            } else {
+                keyboard
+                .textButton({ 	label: 'Надеть',
+                                payload: { command: `${i}` },
+                                color: 'secondary'			   })
+                .textButton({	label: 'Разобрать',
+                                payload: { command: `${i}` },
+                                color: 'secondary'			   })
+                .oneTime().inline()
+            }
+            context.question(`${data[i].name} 🛡${data[i][configs[pattern][0]].toFixed(2)} - ${data[i][configs[pattern][1]].toFixed(2)} 🔧${data[i].hp.toFixed(2)}`,
+                { keyboard: keyboard }
+            )
+            counter++
+            i++
+        }
+        
+        const  push = await context.question('Быстрый доступ',
+            { keyboard: Keyboard.builder()
+                .textButton({   label: '<',
+                                payload: { command: "left" },
+                                color: 'primary'              })
+                .textButton({   label: `${(modif+3)/3}/${Math.round(data.length/3)}`,
+                                payload: { command: "left" },
+                                color: 'primary'              })
+                .textButton({   label: '>',
+                                payload: { command: 'right' },
+                                color: 'primary'              }).row()
+                .textButton({   label: 'Назад',
+                                payload: { command: 'back' },
+                                color: 'primary'              })
+                .textButton({   label: 'Закончить',
+                                payload: { command: 'end' },
+                                color: 'primary'              })
+                
+                .oneTime() }
+        )
+        if (push.payload) {
+            if (push.text == 'Снять') {
+                data[push.payload.command].equip = false
+                await context.send(`Снято ${data[push.payload.command].name}`)
+            }
+            if (push.text == 'Надеть') {
+                data[push.payload.command].equip = true 
+                await context.send(`Надето ${data[push.payload.command].name}`)
+            }
+            if (push.text == 'Назад') {
+                return {cat_stop: false, data: data}
+            }
+            if (push.text == 'Закончить') {
+                return {cat_stop: true, data: data}
+            }
+            if (push.text == '>') {
+                if (modif+lim < data.length) {
+                    modif += lim
+                }
+            }
+            if (push.text == '<') {
+                if (modif-lim >= 0) {
+                    modif -= lim
+                }
+            }
+        }
+    }
+}
