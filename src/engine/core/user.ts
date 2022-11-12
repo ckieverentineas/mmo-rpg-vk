@@ -47,6 +47,7 @@ export class Player {
 	protected skill: any;
 	protected smile: any;
 	protected health: any;
+	get _health():number { return this.health }
 	protected health_max: any;
 	public static async build(context: any): Promise<typeof instance>{
 		const find_player: any = await prisma.userType.findFirst({where: {name: 'player'}, include:{UserConfig: true}})
@@ -111,13 +112,13 @@ export class Player {
 		for(const i in this.weapon) {
 			const update = await prisma.weapon.update({
 				where: { id: 	this.weapon[i].id},
-				data:  { hp: 	this.weapon[i].hp}
+				data:  { hp: 	this.weapon[i].hp, equip: this.weapon[i].equip}
 			})
 		}
 		for(const i in this.armor) {
 			const update = await prisma.armor.update({
 				where: { id: 	this.armor[i].id},
-				data:  { hp: 	this.armor[i].hp}
+				data:  { hp: 	this.armor[i].hp, equip: this.armor[i].equip}
 			})
 		}
 		for (const i in this.skill) {
@@ -234,17 +235,35 @@ export class Player {
 			}
 		}
 	}
+	protected async Skill_Up(id_skill_config: number) {
+		for (let i = 0; i < this.skill.length; i++) {
+			if (this.skill[i].id_skill_config == id_skill_config) {
+				const gen1 = randomInt(0,100)
+				const gen2 = randomInt(0, 100)
+				const gen3 = Math.random()
+				const gen4 = Math.random()
+				if (gen1 > 50 && gen2 < 50 && gen3 > 0.5 && gen4 < 0.5) {
+					const mod = Math.random()
+					this.skill[i].xp+= mod
+					await this.context.send(`${this.smile?.skill_up}Повышение ${this.skill[i].skill_config.label} на ${mod.toFixed(2)}`)
+				}
+			} 
+		}
+	}
 	async Attack() {
 		console.log(`Attack from player: ${this.user.idvk}`)
 		let sum: any = []
 		for (const i in this.weapon) {
 			if ( this.weapon[i].equip) {
+				console.log(this.weapon[i].weapon_config.id_skill_config)
+				await this.Skill_Up(this.weapon[i].weapon_config.id_skill_config)
 				sum.push({ name: `${this.weapon[i].name}`, dmg: `${await random(this.weapon[i].atk_min, this.weapon[i].atk_max)}`})
 			}
 		}
 		if (sum.length < 1) {
 			for (const i in this.body) {
 				if (this.body[i].atk_min > 0) {
+					await this.Skill_Up(this.body[i].body_config.id_skill_config)
 					sum.push({ name: `${this.body[i].name}`, dmg: `${await random(this.body[i].atk_min, this.body[i].atk_max)}`})
 				}
 			}
@@ -266,6 +285,7 @@ export class Player {
 							const reduce = sum[x].dmg * (1 - await random(this.armor[i].def_min, this.armor[i].def_max)/100)
 							this.health -= reduce
 							full_dmg += reduce
+							await this.Skill_Up(this.armor[i].armor_config.id_skill_config)
 						}
 					}
 				}
@@ -277,6 +297,7 @@ export class Player {
 						const reduce = sum[x].dmg * (1 - await random(this.body[j].def_min, this.body[j].def_max)/100)
 						this.health -= reduce
 						full_dmg += reduce
+						await this.Skill_Up(this.body[j].body_config.id_skill_config)
 					}
 				}
 			}

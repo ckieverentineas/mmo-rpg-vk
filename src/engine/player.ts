@@ -16,21 +16,17 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
         await npc.Detector()
         await npc.Sync()
         await npc.Save()
-
-        let fight_end = false
-        while (fight_end == false) {
+        while (player._health > 0 && npc._health > 0) {
             const turn = await context.question(`
-                    ${await player.Print()}\n ${await npc.Print()}`,
-                {
-                    keyboard: Keyboard.builder()
+                    ${await player.Print()}\n ${await npc.Print()}
+                `,{ keyboard: Keyboard.builder()
                     .textButton({   label: 'Атака',
                                     payload: {  command: 'attack'   },
                                     color: 'secondary'                  }).row()
                     .textButton({   label: 'Отмена',
                                     payload: {  command: 'back' },
                                     color: 'secondary'
-                                                                        }).oneTime()
-                }
+                                                                        }).oneTime() }
             )
             if (turn) {
                 const atk_player = await player.Attack()
@@ -62,7 +58,7 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
             
         }
         async function PVP_Init(context: any) {
-            const player = await Player.build({ context })
+            const player = await Player.build(context)
             const npc = await NPC.build(context)
             let fight_end = false
             while (fight_end == false) {
@@ -90,8 +86,13 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
             
         }
     })
-    hearManager.hear(/craft/, async (context) => { 
-        const player = await Player.build({ context })
+    hearManager.hear(/крафт/, async (context) => { 
+        const player = await Player.build(context)
         await player.Craft()
+    })
+    hearManager.hear(/инвентарь/, async (context) => { 
+        const player = await Player.build(context)
+        await player.Inventory()
+        await player.Save()
     })
 }
