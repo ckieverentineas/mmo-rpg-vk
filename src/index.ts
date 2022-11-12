@@ -43,7 +43,6 @@ vk.updates.on('message_new', async (context, next) => {
 	const player = await Player.build(context)
 	await player.Detector()
 	await player.Sync()
-	await player.Inventory()
 	//проверяем есть ли пользователь в базах данных
 	//const player = await Player.build({ context })
 	//если пользователя нет, то начинаем регистрацию

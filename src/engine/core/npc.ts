@@ -2,89 +2,60 @@ import { PrismaClient } from "@prisma/client"
 import { randomInt } from "crypto"
 import { Keyboard } from "vk-io"
 import { prisma } from "../.."
-/*
+import { Detector_Health, Load, Player, random } from "./user";
+
+
 export class NPC extends Player {
-	public static async build(context: any) : Promise<NPC> {
-        const select_type: any = await prisma.userType.findFirst({	where: {	name: 'npc'	}	})
+	public static async build(context: any): Promise<typeof instance>{
+		const find_player: any = await prisma.userType.findFirst({where: {name: 'slime'}, include:{UserConfig: true}})
 		const validator: any = await prisma.user.findFirst({
 			where: 		{	idvk: context.senderId,
-							id_user_type: select_type.id	}
+							id_user_config: find_player.UserConfig[0].id	}
 		})
 		if (!validator) {
-			const user_config_get: any = await prisma.userConfig.findFirst({})
 			const user_create = await prisma.user.create({	
-				data: {		idvk: context.senderId,
-							gold: randomInt(user_config_get?.gold_min, user_config_get?.gold_max),
-							hp: randomInt(user_config_get?.hp_min, user_config_get?.hp_max),
-							id_user_type: select_type.id													}
+				data: 	{	id_user_config: find_player.UserConfig[0].id,
+							idvk: context.senderId, 
+							gold: find_player.UserConfig[0].gold + find_player.UserConfig[0].gold * await random(-find_player.UserConfig[0].gold_mod, find_player.UserConfig[0].gold_mod),
+							nickname: 'Слизь'								
+						}
 			})
+			const body_config = await prisma.bodyConfig.findMany({include:{skill_config: true}})
+			for (const i in body_config) {
+				const body_create = await prisma.body.create({
+					data: {	id_user: user_create.id,
+							id_body_config: body_config[i].id,
+							atk_min: body_config[i].atk + body_config[i].atk * await random(-body_config[i].atk_mod, body_config[i].atk_mod),
+							atk_max: body_config[i].atk + body_config[i].atk * await random(-body_config[i].atk_mod, body_config[i].atk_mod),
+							def_min: body_config[i].def + body_config[i].def * await random(-body_config[i].def_mod, body_config[i].def_mod),
+							def_max: body_config[i].def + body_config[i].def * await random(-body_config[i].def_mod, body_config[i].def_mod),
+							health: body_config[i].health + body_config[i].health * await random(-body_config[i].health_mod, body_config[i].health_mod),
+							name: body_config[i].skill_config.label
+						}
+				})
+			}
 			console.log(`Created npc for user ${user_create.idvk}`)
 		}
-		const user: any = await prisma.user.findFirst({
-			where: 		{	idvk: context.senderId,
-							id_user_type: select_type.id	},
-			include: 	{	Weapon: true,
-							Armor: true,
-							Skill: true						}
-		})
+		const data = await Load(context, 'slime')
 		const instance = new NPC()
-		instance.user = user
+		instance.user = data.user
+		instance.body = data.body
+		instance.weapon = data.weapon
+		instance.armor = data.armor
+		instance.skill = data.skill
 		instance.context = context
-		instance.hp_current = user?.hp
-        instance.smile = {	'player': '🤖', 'npc': '👤', 'skill_up': '🦾'	}
+        instance.health = await Detector_Health(data.body)
+		instance.health_max = await Detector_Health(data.body)
+		instance.smile = {	'player': '🤖', 'npc': '👤', 'skill_up': '🦾'	}
 		return instance
 	}
+    async Sync() {
+		console.log(`Sync data for player: ${this.user.idvk}`)
+		const data = await Load(this.context, 'slime')
+		this.user = data.user
+		this.body = data.body
+		this.weapon = data.weapon
+		this.armor = data.armor
+		this.skill = data.skill
+	}
 }
-export async function NPC_create() {
-    const npc_config_get: any = await prisma.userConfig.findFirst({})
-    const npc_create: any = {
-        idvk: 0,
-        gold: randomInt(npc_config_get?.gold_min||5, npc_config_get?.gold_max||10),
-        hp: randomInt(npc_config_get?.hp_min||5, npc_config_get?.hp_max||10),
-        id_user_type: 2
-    }
-    return npc_create
-}
-export async function NPC_weapon_create() {
-    const weapon_config_get: any = await prisma.weaponConfig.findFirst({
-        where: {
-            id_skill_config: randomInt(1, 4)
-        }
-    })
-    const npc_weapon: any = {
-        id_skill_config: weapon_config_get.id_skill_config,
-        id_damage_type: 1,
-        lvl: randomInt(weapon_config_get?.lvl_req_min || 0, weapon_config_get?.lvl_req_max || 5),
-        atk_min: weapon_config_get?.atk_min,
-        atk_max: randomInt(weapon_config_get?.atk_min+1 || 0, weapon_config_get?.atk_max || 5),
-        hp: randomInt(weapon_config_get?.hp_min || 0, weapon_config_get?.hp_max || 5),
-    }
-    return npc_weapon
-}
-
-export async function NPC_armor_create() {
-    const armor_type: any = await prisma.armorType.findMany()
-    const armor_config_get:any = await prisma.armorConfig.findFirst({
-        where: {
-            id_skill_config: randomInt(5,7)
-        }
-    })
-    
-    let npc_armor: any = []
-    for (let i= 0; i < armor_type.length; i++) {
-        const data: any = {
-            id: armor_type[i].id,
-            id_skill_config: armor_config_get.id_skill_config,
-            id_damage_type: 1,
-            id_armor_type: armor_type[i].id,
-            lvl: randomInt(armor_config_get?.lvl_req_min || 0, armor_config_get?.lvl_req_max || 5),
-            def_min: armor_config_get?.def_min || 0,
-            def_max: randomInt(armor_config_get?.def_min+1 || 0, armor_config_get?.def_max || 5),
-            hp: randomInt(armor_config_get?.hp_min || 0, armor_config_get?.hp_max || 5),
-            name: armor_type[i].label
-        }
-        npc_armor.push(data)
-    }
-    return npc_armor
-}
-*/

@@ -3,34 +3,20 @@ import { HearManager } from "@vk-io/hear";
 import { randomInt } from "crypto";
 import { Keyboard, KeyboardBuilder } from "vk-io";
 import { IQuestionMessageContext } from "vk-io-question";
-import { Battle_Init } from './core/battle';
 import { prisma } from "..";
+import { Player } from "./core/user";
+import { NPC } from "./core/npc";
 
 const event: string[] = []
 export function registerUserRoutes(hearManager: HearManager<IQuestionMessageContext>): void {
-	/*hearManager.hear(/удалиться/, async (context) => {
-        const player = await Player.build({ context })
-        console.log(JSON.stringify(player))
-        const player_delete = await prisma.user.delete({
-            where: {
-                //id: player.user.id
-            }
-        })
-        if (player_delete) {
-            context.send(`Успешно удалены ${player_delete?.idvk}`)
-        } else {
-            context.send(`${JSON.stringify(player)}`)
-        }
-    })
+
     hearManager.hear(/битва/, async (context) => {
-        const player = await Player.build({ context })
+        const player = await Player.build(context)
         const npc = await NPC.build(context)
-        /*await npc.Save()
-        await npc.Create_Weapon()
-        await npc.Create_Armor()
+        await npc.Detector()
+        await npc.Sync()
         await npc.Save()
-        await npc.User_Sync()
-        await npc.Save()*//*
+
         let fight_end = false
         while (fight_end == false) {
             const turn = await context.question(`
@@ -107,5 +93,5 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
     hearManager.hear(/craft/, async (context) => { 
         const player = await Player.build({ context })
         await player.Craft()
-    })*/
+    })
 }

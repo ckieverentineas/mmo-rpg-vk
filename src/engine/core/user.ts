@@ -4,11 +4,11 @@ import { Context, Keyboard } from "vk-io";
 import { prisma } from "../.."
 import { Gen_Inline_Button, Gen_Inline_Button_Equipment } from "./button";
 
-async function random(min: number, max: number) {
+export async function random(min: number, max: number) {
 	return min + Math.random() * (max - min);
 }
 
-async function Load(context: any, target: string) {
+export async function Load(context: any, target: string) {
 	const find_player: any = await prisma.userType.findFirst({where: {name: target}, include:{UserConfig: true}})
 	const user: any = await prisma.user.findFirst({
 		where: 		{	idvk: context.senderId,
@@ -33,6 +33,11 @@ async function Load(context: any, target: string) {
 	return { 'user': user, 'body': body, 'weapon': weapon, 'armor': armor, 'skill': skill }
 }
 
+export async function Detector_Health(body: any) {
+	let sum = 0
+	for (const i in body) { sum += body[i].health }
+	return sum
+}
 export class Player {
 	protected context: any;
 	protected user: any;
@@ -41,6 +46,8 @@ export class Player {
 	protected armor: any;
 	protected skill: any;
 	protected smile: any;
+	protected health: any;
+	protected health_max: any;
 	public static async build(context: any): Promise<typeof instance>{
 		const find_player: any = await prisma.userType.findFirst({where: {name: 'player'}, include:{UserConfig: true}})
 		const validator: any = await prisma.user.findFirst({
@@ -79,6 +86,8 @@ export class Player {
 		instance.armor = data.armor
 		instance.skill = data.skill
 		instance.context = context
+		instance.health = await Detector_Health(data.body)
+		instance.health_max = await Detector_Health(data.body)
 		instance.smile = {	'player': '👤', 'npc': '🤖', 'skill_up': '⚜'	}
 		return instance
 	}
@@ -144,13 +153,13 @@ export class Player {
 		await Anal(this.skill, this.weapon, this.context, 'weapon_config', this.smile.skill_up)
 		await Anal(this.skill, this.armor, this.context, 'armor_config', this.smile.skill_up)
 	}
-	async Print() {
+	async Info() {
 		let res = ''
 		const ico: any = ['🧢', '👘', '🤛🏻', '🤜🏻', '🦵🏻', '🦵🏻', '👟', '👞']
 		for (const i in this.body) {
 			res += `${ico[i]}: ⚔${this.body[i].atk_min.toFixed(2)} - ${this.body[i].atk_max.toFixed(2)} 🛡${this.body[i].def_min.toFixed(2)} - ${this.body[i].def_max.toFixed(2)} ❤${this.body[i].health.toFixed(2)} \n`
 		}
-		this.context.send(`${res}`)
+		return res
 	}
 	async Craft() {
 		console.log(`Visit craft system by player: ${this.user.idvk}`)
@@ -207,6 +216,7 @@ export class Player {
 		}
 	}
 	async Inventory() {
+		console.log(`Visit inventory system by player: ${this.user.idvk}`)
 		let cat_stop = false
 		while (cat_stop == false) {
 			const category = await prisma.skillCategory.findMany({ where: { hidden: false } })
@@ -222,8 +232,64 @@ export class Player {
 				cat_stop = pull?.cat_stop
 				this.weapon = pull?.data
 			}
-			
 		}
-		
+	}
+	async Attack() {
+		console.log(`Attack from player: ${this.user.idvk}`)
+		let sum: any = []
+		for (const i in this.weapon) {
+			if ( this.weapon[i].equip) {
+				sum.push({ name: `${this.weapon[i].name}`, dmg: `${await random(this.weapon[i].atk_min, this.weapon[i].atk_max)}`})
+			}
+		}
+		if (sum.length < 1) {
+			for (const i in this.body) {
+				if (this.body[i].atk_min > 0) {
+					sum.push({ name: `${this.body[i].name}`, dmg: `${await random(this.body[i].atk_min, this.body[i].atk_max)}`})
+				}
+			}
+		}
+		return sum
+	}
+	async Defense(sum: any) {
+		console.log(`Defence from player: ${this.user.idvk}`)
+		let full_dmg = 0
+		for (const x in sum) {
+			const parts: any = await prisma.bodyConfig.findMany({})
+			const target: any = randomInt(0, parts.length)
+			let find = false
+			for (const i in this.armor) {
+				if(this.armor[i].id_body_config == parts[target].id && this.armor[i].equip) {
+					for (const j in this.body) {
+						if (this.body[j].body_config.id == this.armor[i].id_body_config) {
+							find = true
+							const reduce = sum[x].dmg * (1 - await random(this.armor[i].def_min, this.armor[i].def_max)/100)
+							this.health -= reduce
+							full_dmg += reduce
+						}
+					}
+				}
+			}
+			if (!find) {
+				for (const j in this.body) {
+					if (this.body[j].body_config.id == parts[target].id) {
+						find = true
+						const reduce = sum[x].dmg * (1 - await random(this.body[j].def_min, this.body[j].def_max)/100)
+						this.health -= reduce
+						full_dmg += reduce
+					}
+				}
+			}
+		}
+		this.context.send(`${this.smile.npc} нанес 💥${full_dmg.toFixed(2)}`)
+	}
+	async Print() {
+		const bar_current = this.health/this.health_max
+		let bar = ''
+		for (let i = 0; i <= 1; i += 0.1) {
+			bar += (i < bar_current) ? '🟥' : '◻'
+		}
+		return `${this.smile?.player}: ${bar} [${(bar_current*100).toFixed(2)}%]\n ❤${this.health.toFixed(2)}/${this.health_max.toFixed(2)} ⚔${3}-${4} 🔧${100} [${this.user.nickname}]`
+
 	}
 }
