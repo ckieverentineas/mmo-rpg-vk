@@ -38,6 +38,7 @@ export async function Detector_Health(body: any) {
 	for (const i in body) { sum += body[i].health }
 	return sum
 }
+
 export class Player {
 	protected context: any;
 	protected user: any;

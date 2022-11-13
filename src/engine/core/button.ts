@@ -124,8 +124,11 @@ export async function Gen_Inline_Button_Equipment(data: any, context: any, patte
                 await context.send(`Снято ${data[push.payload.command].name}`)
             }
             if (push.text == 'Надеть') {
-                data[push.payload.command].equip = true 
-                await context.send(`Надето ${data[push.payload.command].name}`)
+                const checker = await Check_Equip(data, data[push.payload.command].id_body_config)
+                if (!checker) { 
+                    data[push.payload.command].equip = true
+                    await context.send(`Надето ${data[push.payload.command].name}`)
+                } else { await context.send(`На данную часть тела уже надето: ${checker}`) }
             }
             if (push.text == 'Назад') {
                 return {cat_stop: false, data: data}
@@ -145,4 +148,11 @@ export async function Gen_Inline_Button_Equipment(data: any, context: any, patte
             }
         }
     }
+}
+export async function Check_Equip(data: any, id_body_config: number) {
+	for (const i in data) {
+		if (data[i].equip && data[i].id_body_config == id_body_config) {
+			return data[i].name
+		}
+	}
 }
