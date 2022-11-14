@@ -7,7 +7,14 @@ import { Gen_Inline_Button, Gen_Inline_Button_Equipment } from "./button";
 export async function random(min: number, max: number) {
 	return min + Math.random() * (max - min);
 }
-
+export async function Detector_LVL(skill: any, target: any) {
+	for (const i in skill) {
+		if (skill[i].id_skill_config == target) {
+			return skill[i].xp
+		}
+	}
+	return 0
+}
 export async function Load(context: any, target: string) {
 	const find_player: any = await prisma.userType.findFirst({where: {name: target}, include:{UserConfig: true}})
 	const user: any = await prisma.user.findFirst({
@@ -290,14 +297,17 @@ export class Player {
 			if ( this.weapon[i].equip) {
 				console.log(this.weapon[i].weapon_config.id_skill_config)
 				await this.Skill_Up(this.weapon[i].weapon_config.id_skill_config)
-				sum.push({ name: `${this.weapon[i].name}`, dmg: `${await random(this.weapon[i].atk_min, this.weapon[i].atk_max)}`})
+				const skiller = await Detector_LVL(this.skill, this.weapon[i].weapon_config.id_skill_config)/100/this.weapon[i].lvl
+				this.weapon[i].hp -= Math.random()
+				sum.push({ name: `${this.weapon[i].name}`, dmg: `${await random(this.weapon[i].atk_min, this.weapon[i].atk_max)*skiller}`})
 			}
 		}
 		if (sum.length < 1) {
 			for (const i in this.body) {
 				if (this.body[i].atk_min > 0) {
 					await this.Skill_Up(this.body[i].body_config.id_skill_config)
-					sum.push({ name: `${this.body[i].name}`, dmg: `${await random(this.body[i].atk_min, this.body[i].atk_max)}`})
+					const skiller = await Detector_LVL(this.skill, this.body[i].body_config.id_skill_config)/100
+					sum.push({ name: `${this.body[i].name}`, dmg: `${await random(this.body[i].atk_min, this.body[i].atk_max)*skiller}`})
 				}
 			}
 		}
@@ -315,9 +325,13 @@ export class Player {
 					for (const j in this.body) {
 						if (this.body[j].body_config.id == this.armor[i].id_body_config) {
 							find = true
-							const reduce = sum[x].dmg * (1 - await random(this.armor[i].def_min, this.armor[i].def_max)/100)
+							const expa = await Detector_LVL(this.skill, this.armor[i].armor_config.id_skill_config)
+							const skiller = Math.sqrt(Math.sqrt(expa*100))
+							const mod = (expa/this.armor[i].lvl <= 1) ? expa/this.armor[i].lvl : 1
+							const reduce = sum[x].dmg * (1 - await random(this.armor[i].def_min, this.armor[i].def_max)/100)*mod + skiller
 							this.health -= reduce
 							full_dmg += reduce
+							this.armor[i].hp -= Math.random()
 							await this.Skill_Up(this.armor[i].armor_config.id_skill_config)
 						}
 					}
