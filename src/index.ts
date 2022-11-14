@@ -116,6 +116,19 @@ vk.updates.on('message_new', async (context, next) => {
 		await player.Save()
 	}*/
 	//await player.Save()
+	const  push = await context.send('Быстрый доступ',
+            { keyboard: Keyboard.builder()
+                .textButton({   label: 'инвентарь',
+                                payload: { command: "left" },
+                                color: 'primary'              }).row()
+                .textButton({   label: `крафт`,
+                                payload: { command: "left" },
+                                color: 'primary'              }).row()
+                .textButton({   label: 'битва',
+                                payload: { command: 'right' },
+                                color: 'primary'              })
+                .oneTime() }
+    )
 	return next();
 })
 
