@@ -34,9 +34,9 @@ export function registerUserRoutes(hearManager: HearManager<IQuestionMessageCont
                 const atk_npc = await npc.Attack()
                 await player.Defense(atk_npc)
             }
-            await player.Save()
-            await npc.Save()
         }
+        await player.Save()
+        await npc.Save()
     })
     hearManager.hear(/pvp/, async (context) => {
         const init_fight = await context.question(`

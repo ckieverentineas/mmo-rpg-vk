@@ -38,6 +38,32 @@ export async function Detector_Health(body: any) {
 	for (const i in body) { sum += body[i].health }
 	return sum
 }
+export async function Detector_Atk(data: any, body: any) {
+	let sum: any = { atk_min: 0, atk_max: 0, hp: '' }
+	let hp = []
+	for (const i in data) {
+		if (data[i].equip) {
+			sum.atk_min += data[i].atk_min
+			sum.atk_max += data[i].atk_max
+			hp.push(data[i].hp)
+		}
+	}
+	if (hp.length > 0) {
+		let avg = 0
+		for (const i in hp) { avg += hp[i] }
+		avg /= hp.length
+		sum.hp = avg.toFixed(2)
+	} else { sum.hp = '∞' }
+	if (sum.atk_max == 0) {
+		for (const i in body) {
+			if (body[i].atk_min > 0) {
+				sum.atk_min += body[i].atk_min
+				sum.atk_max += body[i].atk_max
+			}
+		}
+	}
+	return sum
+}
 
 export class Player {
 	protected context: any;
@@ -165,7 +191,7 @@ export class Player {
 	}
 	async Craft() {
 		console.log(`Visit craft system by player: ${this.user.idvk}`)
-		async function Selector(user: any, body: any, context: any, data: any, pattern:string, id: number) {
+		async function Selector(user: any, body: any, context: any, data: any, pattern:string, id: number, selected_part: any) {
 			let target: any = null
 			for (const i in data) { if (data[i].pattern == id) { target = data[i].pattern } }
 			if (pattern == 'weapon_config') {
@@ -176,14 +202,14 @@ export class Player {
 				const create = await prisma.weapon.create({
 					data: {	id_user: 			user.id,
 							id_weapon_config: 	target.id,
-							id_body_config: 	body[randomInt(0, body.length)].id_body_config,
+							id_body_config: 	selected_part.id,
 							lvl: 				target.lvl + target.lvl * await random(-target.lvl_mod, target.lvl_mod),
 							atk_min: 			target.atk + target.atk * await random(-target.atk_mod, target.atk_mod),
 							atk_max: 			target.atk + target.atk * await random(-target.atk_mod, target.atk_mod),
 							hp: 				target.hp + target.hp * await random(-target.hp_mod, target.hp_mod),
 							name: 				'weapon'																	}
 				})
-				await context.send(`Получено оружие: ${create.name} ⚔${create.atk_min.toFixed(2)} - ${create.atk_max.toFixed(2)} 🔧${create.hp.toFixed(2)}`)
+				await context.send(`Получено оружие: ${create.name} ⚔${create.atk_min.toFixed(2)} - ${create.atk_max.toFixed(2)} 🔧${create.hp.toFixed(2)} \n Применяется на части тела: ${selected_part.label}`)
 			}
 			if (pattern == 'armor_config') {
 				if (!target) {
@@ -193,29 +219,35 @@ export class Player {
 				const create = await prisma.armor.create({
 					data: {	id_user: 			user.id,
 							id_armor_config: 	target.id,
-							id_body_config: 	body[randomInt(0, body.length)].id_body_config,
+							id_body_config: 	selected_part.id,
 							lvl: 				target.lvl + target.lvl * await random(-target.lvl_mod, target.lvl_mod),
 							def_min: 			target.def + target.def * await random(-target.def_mod, target.def_mod),
 							def_max: 			target.def + target.def * await random(-target.def_mod, target.def_mod),
 							hp: 				target.hp + target.hp * await random(-target.hp_mod, target.hp_mod),
 							name: 				'armor'																		}
 				})
-				await context.send(`Получено: ${create.name} 🛡${create.def_min.toFixed(2)} - ${create.def_max.toFixed(2)} 🔧${create.hp.toFixed(2)}`)
+				await context.send(`Получено: ${create.name} 🛡${create.def_min.toFixed(2)} - ${create.def_max.toFixed(2)} 🔧${create.hp.toFixed(2)} \n Применяется на части тела: ${selected_part.label}`)
 			}
 			return false
 		} 
-		const category = await prisma.skillCategory.findMany({ where: { hidden: false } })
-		const skill = await  Gen_Inline_Button(this.context, category, 'Выберите категорию:')
-		if (!skill) {return false}
-		const skill_config = await prisma.skillConfig.findMany({ where: { id_skill_category: skill.id, hidden: false } })
-		const skill_sel = await Gen_Inline_Button(this.context, skill_config, 'Что будем крафтить?')
-		if (!skill_sel) {return false}
-		if (skill_sel.id_skill_category == 2) {
-			await Selector(this.user, this.body, this.context, this.weapon, 'weapon_config', skill_sel.id)
+		let cat_stop = false
+		while (cat_stop == false) {
+			const category = await prisma.skillCategory.findMany({ where: { hidden: false } })
+			const skill = await  Gen_Inline_Button(this.context, category, 'Выберите категорию:')
+			if (!skill) {return false}
+			const skill_config = await prisma.skillConfig.findMany({ where: { id_skill_category: skill.id, hidden: false } })
+			const skill_sel = await Gen_Inline_Button(this.context, skill_config, 'Что будем крафтить?')
+			const part = await prisma.skillConfig.findMany({ where: { id_skill_category: 1 } })
+			const part_sel: any = await Gen_Inline_Button(this.context, part, "Для какой части тела?")
+			if (!skill_sel) {return false}
+			if (skill_sel.id_skill_category == 2) {
+				await Selector(this.user, this.body, this.context, this.weapon, 'weapon_config', skill_sel.id, part_sel)
+			}
+			if (skill_sel.id_skill_category == 3) {
+				await Selector(this.user, this.body, this.context, this.armor, 'armor_config', skill_sel.id, part_sel)
+			}
 		}
-		if (skill_sel.id_skill_category == 3) {
-			await Selector(this.user, this.body, this.context, this.armor, 'armor_config', skill_sel.id)
-		}
+		
 	}
 	async Inventory() {
 		console.log(`Visit inventory system by player: ${this.user.idvk}`)
@@ -311,7 +343,8 @@ export class Player {
 		for (let i = 0; i <= 1; i += 0.1) {
 			bar += (i < bar_current) ? '🟥' : '◻'
 		}
-		return `${this.smile?.player}: ${bar} [${(bar_current*100).toFixed(2)}%]\n ❤${this.health.toFixed(2)}/${this.health_max.toFixed(2)} ⚔${3}-${4} 🔧${100} [${this.user.nickname}]`
+		const weapon = await Detector_Atk(this.weapon, this.body)
+		return `${this.smile?.player}: ${bar} [${(bar_current*100).toFixed(2)}%]\n ❤${this.health.toFixed(2)}/${this.health_max.toFixed(2)} ⚔${weapon.atk_min.toFixed(2)}-${weapon.atk_max.toFixed(2)} 🔧${weapon.hp} [${this.user.nickname}]`
 
 	}
 }

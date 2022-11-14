@@ -30,7 +30,7 @@ export async function Gen_Inline_Button(context: any, weapon_type: any, mesa: st
         .textButton({   label: '<',
                         payload: { command: "left" },
                         color: 'primary'              })
-        .textButton({   label: 'назад',
+        .textButton({   label: 'Стоп',
                         payload: { command: 'back' },
                         color: 'primary'              })
         .textButton({   label: '>',
@@ -44,7 +44,7 @@ export async function Gen_Inline_Button(context: any, weapon_type: any, mesa: st
             context.send('Жмите по inline кнопкам!')
         } else {
             if (skill.payload.command == 'back') {
-                context.send('Вы нажали назад')
+                context.send('Действие успешно отменено')
                 modif = 0
                 return false
             }
@@ -61,7 +61,11 @@ export async function Gen_Inline_Button(context: any, weapon_type: any, mesa: st
         }
     }
 }
-
+export async function Finder_Part_Info(id: any) {
+    const data = await prisma.bodyConfig.findFirst({where: {id: id}})
+    const found = await prisma.skillConfig.findFirst({where: {id: data?.id_skill_config}})
+    return found?.label
+}
 export async function Gen_Inline_Button_Equipment(data: any, context: any, pattern: string) {
     let stopper = false
 	let modif = 0
@@ -91,7 +95,7 @@ export async function Gen_Inline_Button_Equipment(data: any, context: any, patte
                                 color: 'secondary'			   })
                 .oneTime().inline()
             }
-            context.question(`${data[i].name} 🛡${data[i][configs[pattern][0]].toFixed(2)} - ${data[i][configs[pattern][1]].toFixed(2)} 🔧${data[i].hp.toFixed(2)}`,
+            context.question(`${data[i].name} 🛡${data[i][configs[pattern][0]].toFixed(2)} - ${data[i][configs[pattern][1]].toFixed(2)} 🔧${data[i].hp.toFixed(2)}  \n Применяется на части тела: ${await Finder_Part_Info(data[i].id_body_config)}`,
                 { keyboard: keyboard }
             )
             counter++
