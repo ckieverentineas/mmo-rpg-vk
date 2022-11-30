@@ -14,7 +14,9 @@ import { Player } from './engine/core/user';
 //авторизация
 const vk = new VK({
 	token: "b603c7efd00e1ce663d70a18c8915686bbdfee594a2f8d66d77620c712df5e9c2ae9e211c4164b80df6f9",
-	pollingGroupId: 207638246
+	pollingGroupId: 207638246,
+	webhookConfirmation: "b69aa45b",
+	webhookSecret: "dsafeighwuhq8t742178tfiuhwef"
 	//token: 'd0d096ed5933ced08bc674c08134e4e47603a0443f4972d6595024ae32f8677b62032ec53ebfddc80ff16'
 });
 
@@ -132,9 +134,4 @@ vk.updates.on('message_new', async (context, next) => {
 	return next();
 })
 
-vk.updates.start({
-	webhook: {
-		// ...
-		path: 'dsafeighwuhq8t742178tfiuhwef'
-	}
-}).catch(console.error);
+vk.updates.start().then(() => console.log('Server stand up!')).catch(console.log);
