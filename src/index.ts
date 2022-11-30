@@ -134,4 +134,4 @@ vk.updates.on('message_new', async (context, next) => {
 	return next();
 })
 
-vk.updates.start().then(() => console.log('Server stand up!')).catch(console.log);
+vk.updates.start({ webhook: { path: `https://violet-puppy-shoe.cyclic.app` } }).then(() => console.log('Server stand up!')).catch(console.log);
