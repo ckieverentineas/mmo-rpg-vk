@@ -132,4 +132,9 @@ vk.updates.on('message_new', async (context, next) => {
 	return next();
 })
 
-vk.updates.startPolling().catch(console.error);
+vk.updates.start({
+	webhook: {
+		// ...
+		path: 'dsafeighwuhq8t742178tfiuhwef'
+	}
+}).catch(console.error);
