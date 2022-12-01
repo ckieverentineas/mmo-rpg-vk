@@ -20,11 +20,5 @@
     "listFiles":false,
     "noEmitHelpers":true
   },
-  "include":[ 
-      "src/**/*"
-  ],
-  "exclude":[ 
-      "node_modules"
-  ],
   "compileOnSave":false
 }

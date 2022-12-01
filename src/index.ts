@@ -141,7 +141,7 @@ const app: Application = express();
 const PORT = 5000;
 app.post('/', function (req: Request, res: Response) {
 	console.log(req)
-	res.status(200).send('af84ab51');
+	res.send('af84ab51');
 });
 const information: any = os.networkInterfaces()
 app.listen(PORT, () => {
