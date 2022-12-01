@@ -10,7 +10,9 @@ import { timeStamp } from 'console';
 import { registerUserRoutes } from './engine/player'
 import { InitGameRoutes } from './engine/init';
 import { Player } from './engine/core/user';
-
+import { Request, Response, Application } from 'express';
+import express = require('express');
+import * as os from 'os';
 //авторизация
 const vk = new VK({
 	token: "b603c7efd00e1ce663d70a18c8915686bbdfee594a2f8d66d77620c712df5e9c2ae9e211c4164b80df6f9",
@@ -134,4 +136,17 @@ vk.updates.on('message_new', async (context, next) => {
 	return next();
 })
 
+
+const app: Application = express();
+const PORT = 5000;
+app.get('/', function (req: Request, res: Response) {
+  res.send('af84ab51')
+});
+const information: any = os.networkInterfaces()
+app.listen(PORT, () => {
+    console.log(
+        `Server running on https://${information.Ethernet[1].address}:${PORT}.`
+    )
+});
+app.post('/', vk.updates.getWebhookCallback());
 vk.updates.start({ webhook: { path: `/` } }).then(() => console.log('Server stand up!')).catch(console.log);
