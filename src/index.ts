@@ -140,7 +140,8 @@ vk.updates.on('message_new', async (context, next) => {
 const app: Application = express();
 const PORT = 5000;
 app.post('/', function (req: Request, res: Response) {
-	res.send('af84ab51').status(200)
+	console.log(req)
+	res.status(200).send('af84ab51');
 });
 const information: any = os.networkInterfaces()
 app.listen(PORT, () => {
