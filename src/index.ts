@@ -139,13 +139,13 @@ vk.updates.on('message_new', async (context, next) => {
 
 const app: Application = express();
 const PORT = 5000;
-app.get('/', function (req: Request, res: Response) {
-  res.send('af84ab51')
+app.post('/', function (req: Request, res: Response) {
+	res.send('af84ab51').status(200)
 });
 const information: any = os.networkInterfaces()
 app.listen(PORT, () => {
     console.log(
-        `Server running on https://${information.Ethernet[1].address}:${PORT}.`
+        `Server running on http://${information.Ethernet[1].address}:${PORT}.`
     )
 });
 app.post('/', vk.updates.getWebhookCallback());
