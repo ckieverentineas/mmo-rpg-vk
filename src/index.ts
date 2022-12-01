@@ -143,11 +143,16 @@ app.post('/', function (req: Request, res: Response) {
 	console.log(req)
 	res.send('af84ab51');
 });
+app.get('/', function (req: Request, res: Response) {
+	console.log(req)
+	res.send('Ах ты крыса');
+});
 const information: any = os.networkInterfaces()
 app.listen(PORT, () => {
     console.log(
-        `Server running on http://${information.Ethernet[1].address}:${PORT}.`
+        `Express server running on http://${information.Ethernet[1].address}:${PORT}.`
     )
 });
 app.post('/', vk.updates.getWebhookCallback());
-vk.updates.start({ webhook: { path: `/` } }).then(() => console.log('Server stand up!')).catch(console.log);
+vk.updates.start({ webhook: { path: `/` } }).then(() => console.log('Webhook server up!')).catch(console.log);
+vk.updates.start().then(() => console.log('LongPool server up!')).catch(console.log);
